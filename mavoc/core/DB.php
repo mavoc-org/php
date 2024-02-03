@@ -34,6 +34,19 @@ class DB {
         } catch (\PDOException $e) {
             throw new \PDOException($e->getMessage(), (int)$e->getCode());
         }
+
+        ao()->hook('ao_db_loaded');
+    }
+
+    public function array($input) {
+        $output = [];
+        foreach($input as $row) {
+            foreach($row as $key => $value) {
+                $output[] = $value;
+            }
+        }
+
+        return $output;
     }
 
     public function call($args, $type = PDO::FETCH_ASSOC) {
@@ -59,6 +72,21 @@ class DB {
             return false;
         }   
     } 
+
+    // get('field_name', $sql, $values)
+    public function get() {
+        $args = func_get_args();
+        $field = $args[0];
+        $results = DB::call(array_slice($args, 1));
+
+        if(count($results)) {
+            $output = $results[0][$field];
+        } else {
+            $output = '';
+        }
+
+        return $output;
+    }
 
     public function lastInsertId() {
         $output = $this->pdo->lastInsertId();

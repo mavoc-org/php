@@ -2,7 +2,9 @@
 
 define('AO_START', microtime(true));
 
-require __DIR__.'/../mavoc/Main.php';
+require __DIR__.'/../mavoc/Boot.php';
 
-$ao = new mavoc\Main();
-$ao->init();
+$ao = null;
+
+$boot = new mavoc\Boot();
+$boot->init();

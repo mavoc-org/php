@@ -4,6 +4,7 @@ namespace mavoc\core;
 
 class Validators {
     public function __construct() {
+		ao()->hook('ao_validator_init', $this);
     }
 
     // Dynamic rules: 
@@ -14,6 +15,43 @@ class Validators {
 
     public function _add($name, $method) {
         $this->{$name} = $method;
+    }
+
+    public function array($input, $field) {
+        if(
+            !isset($input[$field]) 
+            || $input[$field] == ''
+            || is_array($input[$field])
+        ) {
+            return true;
+        }   
+
+        return false;
+    }   
+    public function arrayMessage($input, $field) {
+        $output = 'The ' . $field . ' field needs to be set to true or false.';
+        return $output;
+    }
+
+    public function boolean($input, $field) {
+        if(
+            !isset($input[$field]) 
+            || $input[$field] == ''
+            || $input[$field] == 1
+            || $input[$field] == 0
+            || $input[$field] == 'yes'
+            || $input[$field] == 'no'
+            || $input[$field] == 'true'
+            || $input[$field] == 'false'
+        ) {
+            return true;
+        }   
+
+        return false;
+    }   
+    public function booleanMessage($input, $field) {
+        $output = 'The ' . $field . ' field needs to be set to true or false.';
+        return $output;
     }
 
     public function dbAccessList() {
@@ -66,10 +104,16 @@ class Validators {
         $input = $args[0];
         $field = $args[1];
         $table = $args[2];
+        $field_name = $args[3];
         $value = $input[$field];
 
-        // UNSAFE: Be careful
-        $results = ao()->db->query('SELECT * FROM ' . $table . ' WHERE ' . $field . ' = ? LIMIT 1', $value);
+        if($field_name) {
+            // UNSAFE: Be careful
+            $results = ao()->db->query('SELECT * FROM ' . $table . ' WHERE ' . $field_name . ' = ? LIMIT 1', $value);
+        } else {
+            // UNSAFE: Be careful
+            $results = ao()->db->query('SELECT * FROM ' . $table . ' WHERE ' . $field . ' = ? LIMIT 1', $value);
+        }
 
         if(count($results) == 0) {
             return false;
@@ -165,11 +209,15 @@ class Validators {
         return $output;
     }
 
+    // Changing from passing: 'in' => [$array]
+    // To simply: 'in' => $array
+    // This may cause some problems so be on the look out for issues.
     public function in($input, $field) {
         $args = func_get_args();
         $input = $args[0];
         $field = $args[1];
-        $list = $args[2];
+        //$list = $args[2];
+        $list = array_slice($args, 2);
         $value = $input[$field];
 
         // Separating it out like this so hooks can be added later.
@@ -193,9 +241,15 @@ class Validators {
 
         return true;                                                                                               
     }   
+    public function integer($input, $field) {
+        return $this->int($input, $field);
+    }
     public function intMessage($input, $field) {
         $output = 'The ' . $field . ' field must be a whole number.';
         return $output;
+    }
+    public function integerMessage($input, $field) {
+        return $this->intMessage($input, $field);
     }
 
     public function match() {
@@ -244,6 +298,27 @@ class Validators {
         return $output;
     }
 
+    public function numeric($input, $field) {
+        $field = $input[$field] ?? '';
+
+        if($field == '') {
+            $field = 0;
+        }
+
+        if(is_numeric($field)) {
+            return true;
+        }
+
+        return false;                                                                                               
+    }   
+    public function numericMessage($input, $field) {
+        $output = 'The ' . $field . ' field must be a number.';
+        return $output;
+    }
+
+    public function optional($input, $field) {
+        return true;
+    }   
 
     public function password($input, $field) {
         if(!isset($input[$field]) || strlen($input[$field]) < 8) {
@@ -268,4 +343,7 @@ class Validators {
         return $output;
     }
 
+    public function sometimes($input, $field) {
+        return true;
+    }   
 }

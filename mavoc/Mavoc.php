@@ -2,19 +2,19 @@
 
 namespace mavoc;
 
-// TODO: Remove
-ini_set('display_errors', 1);   
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL); 
+if(is_file('../vendor/autoload.php')) {
+    require '../vendor/autoload.php';
+}
 
 use app\App;
 
-use mavoc\console\Route as ConsoleRoute;
-use mavoc\console\Router as ConsoleRouter;
+use mavoc\console\Main as ConsoleMain;
 
 use mavoc\core\Confs;
+use mavoc\core\Console;
 use mavoc\core\DB;
 use mavoc\core\Email;
+use mavoc\core\Exception;
 use mavoc\core\Hooks;
 use mavoc\core\HTML;
 use mavoc\core\Plugins;
@@ -27,15 +27,16 @@ use mavoc\core\Session;
 // Probably should handle this with the autoload code. For now, it works for what is needed.
 require_once 'other/helpers.php';
 
-require_once 'console/Route.php';
-require_once 'console/Router.php';
+//require_once 'console/Main.php';
 
 require_once 'core/Clean.php';
 require_once 'core/Cleaners.php';
 require_once 'core/Confs.php';
+require_once 'core/Console.php';
 require_once 'core/DB.php';
 require_once 'core/GenericController.php';
 require_once 'core/Email.php';
+require_once 'core/Exception.php';
 require_once 'core/Hooks.php';
 require_once 'core/HTML.php';
 require_once 'core/InternalREST.php';
@@ -61,21 +62,29 @@ spl_autoload_register(function($class) {
     }
 });
 
-class Main {
+class Mavoc {
     public $app;
     public $confs;
+    public $console;
     public $db;
     public $email;
     public $envs = [];
     public $hooks;
     public $html;
-    public $plugs;
+    public $plugins;
     public $router;
     public $session;
 
-    public function __construct() {
-        // Load environment variables.
-        $this->envs = require '..' . DIRECTORY_SEPARATOR . '.env.php';
+    public $type = 'web';
+
+    public function __construct($envs) {
+        $this->envs = $envs;
+    }
+
+    // This will not work well with interactive commands.
+    // All output is suppressed.
+    public function command($command) {
+        return $this->console->call($command);
     }
 
     public function conf($key, $value = null) {
@@ -113,8 +122,23 @@ class Main {
         return $this->hooks->filter($key, $args, $priority);
     }
 
-    public function hook($key, $item = null, $args = []) {
-        return $this->hooks->hook($key, $item, $args);
+    //public function hook($key, $item = null, $args = []) {
+    //}
+    public function hook() {
+        $func_args = func_get_args();
+        $key = $func_args[0];
+        $item = null;
+        if(isset($func_args[1])) {
+            $item = $func_args[1];
+        }
+        $args = [];
+        $args[] = $key;
+        $args[] = $item;
+        for($i = 2; $i < count($func_args); $i++) {
+            $args[] = $func_args[$i];
+        }
+        //return $this->hooks->hook($key, $item, $args);
+        return call_user_func_array([$this->hooks, 'hook'], $args);
     }
 
     public function init() {
@@ -123,11 +147,6 @@ class Main {
         $this->hooks = new Hooks();
         $this->confs = new Confs();
 
-        // Use this to override Plugins.
-        // You will probably never need this but added just in case.
-        if(is_file('..' . DIRECTORY_SEPARATOR . '.boot.php')) {
-            require '..' . DIRECTORY_SEPARATOR . '.boot.php';
-        }
         $this->hook('ao_start');
 
         // Have a separate creation and then init for hook purposes.
@@ -152,6 +171,11 @@ class Main {
         $func = $this->hook('ao_confs_init', $func);
         call_user_func($func);
 
+        $this->console = new Console();
+        $this->console = $this->hook('ao_console', $this->console);
+        $func = [$this->console, 'init'];
+        $func = $this->hook('ao_console_init', $func);
+        call_user_func($func);
 
         // Maybe have this fixed with autoloading
         $app_file = ao()->env('AO_APP_DIR') . DIRECTORY_SEPARATOR . 'App.php';
@@ -209,6 +233,9 @@ class Main {
         $func = $this->hook('ao_response_init', $func);
         call_user_func($func);
 
+        $this->request = $this->hook('ao_request_available', $this->request);
+        $this->response = $this->hook('ao_response_available', $this->response);
+        $this->session = $this->hook('ao_session_available', $this->session);
 
         $this->email = new Email();
         $this->email = $this->hook('ao_email', $this->email);
@@ -233,16 +260,34 @@ class Main {
         $this->request->session = $this->session;
         if($this->session->user) {
             $this->request->user = $this->session->user;
+            $this->request->user = $this->hook('ao_user', $this->request->user, $this->request, $this->response);
+
             $this->request->user_id = $this->session->user_id;
+            $this->request->user_id = $this->hook('ao_user_id', $this->request->user_id, $this->request, $this->response);
         }
 
         try {
             $this->router->route($this->request, $this->response);
+        } catch(Exception $e) {
+            $redirect = $e->getRedirect();
+            $redirect = $this->hook('ao_final_exception_redirect', $redirect, $e, $this->request, $this->response);
+            $this->response->error($e->getMessage(), $redirect);
         } catch(\Exception $e) {
-            $this->response->error($e->getMessage());
+            if(isset($this->request->last_url)) {
+                $redirect = $this->request->last_url;
+            } else {
+                $redirect = '/';
+            }
+            $redirect = $this->hook('ao_final_exception_redirect', $redirect, $e, $this->request, $this->response);
+            
+            $this->response->error($e->getMessage(), $redirect);
         }
 
         $this->hook('ao_end');
+    }
+
+    public function once($key, $args = [], $priority = 10) {
+        return $this->hooks->once($key, $args, $priority);
     }
 
     public function unfilter($key, $args = [], $priority = 10) {

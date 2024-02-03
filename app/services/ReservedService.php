@@ -1,5 +1,7 @@
 <?php
 
+namespace app\services;
+
 class ReservedService {
     public static function usernames() {
         $output = [

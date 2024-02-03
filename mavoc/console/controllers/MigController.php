@@ -4,6 +4,7 @@ namespace mavoc\console\controllers;
 
 use DateTime;
 
+// TODO: Need to move this to core
 class MigController {
     public $db;
 
@@ -11,11 +12,82 @@ class MigController {
         $this->db = ao()->db;
     }   
 
+    public function alter($in, $out) {
+        $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';
+        if(!is_dir($dir)) {
+            out('Error: ' . 'The db/migrations directory does not appear to exist. Please create it.', 'red');
+            exit(1);
+        }
+
+        // Create the new migration file
+        // Date time underscored passed in info
+
+        $today = new DateTime();
+        $file = '';
+        $file .= $today->format('Y_m_d_H_i_s_');
+        $file .= implode('_', $in->params);
+        $file .= '.php';
+
+        // Check if the file already exists
+        $path = $dir . DIRECTORY_SEPARATOR . $file;
+        if(is_file($path)) {
+            out('Error: ' . 'The migration already appears to exist. Please try again.', 'red');
+            exit(1);
+        }
+
+        if(count($in->params) == 1) {
+            $table = $in->params[0];
+        } else {
+            $table = 'example';
+        }
+
+$content = <<<PHP
+<?php
+
+// Up
+\$up = function(\$db) {
+    \$sql = <<<'SQL'
+ALTER TABLE `$table` RENAME COLUMN old_col_name TO new_col_name;
+ALTER TABLE `$table`
+
+  ADD COLUMN `user_id` bigint unsigned NOT NULL DEFAULT '0',
+  ADD COLUMN `name` varchar(255) NOT NULL DEFAULT '',
+  ADD COLUMN `content` longtext,
+  ADD COLUMN `total_cents` int NOT NULL DEFAULT '0',
+  ADD COLUMN `quantity_int2` int NOT NULL DEFAULT '0',
+  ADD COLUMN `primary` tinyint(1) NOT NULL DEFAULT '0',
+  ADD COLUMN `expires_at` timestamp NULL DEFAULT NULL;
+SQL;
+
+    \$db->query(\$sql);
+};
+
+// Down
+\$down = function(\$db) {
+    \$sql = <<<'SQL'
+ALTER TABLE `$table` RENAME COLUMN new_col_name TO old_col_name;
+ALTER TABLE `$table`
+
+  DROP COLUMN `user_id`,
+  DROP COLUMN `name`;
+SQL;
+
+    \$db->query(\$sql);
+};
+
+PHP;
+
+        file_put_contents($path, $content);
+
+
+        out('The migration has been created: ' . $file, 'green');
+    }
+
     // mig up is greedy (all at once) while mig down is stingy (one at a time)
     public function down($in, $out) {
-        $dir = ao()->env('AO_APP_DIR') . DIRECTORY_SEPARATOR . 'settings' . DIRECTORY_SEPARATOR . 'migrations';
+        $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';
         if(!is_dir($dir)) {
-            out('Error: ' . 'The app/settings/migrations directory does not appear to exist. Please create it.', 'red');
+            out('Error: ' . 'The db/migrations directory does not appear to exist. Please create it.', 'red');
             exit(1);
         }
 
@@ -102,9 +174,9 @@ SQL;
     }
 
     public function new($in, $out) {
-        $dir = ao()->env('AO_APP_DIR') . DIRECTORY_SEPARATOR . 'settings' . DIRECTORY_SEPARATOR . 'migrations';
+        $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';
         if(!is_dir($dir)) {
-            out('Error: ' . 'The app/settings/migrations directory does not appear to exist. Please create it.', 'red');
+            out('Error: ' . 'The db/migrations directory does not appear to exist. Please create it.', 'red');
             exit(1);
         }
 
@@ -174,9 +246,9 @@ PHP;
 
     // mig up is greedy (all at once) while mig down is stingy (one at a time)
     public function up($in, $out) {
-        $dir = ao()->env('AO_APP_DIR') . DIRECTORY_SEPARATOR . 'settings' . DIRECTORY_SEPARATOR . 'migrations';
+        $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';
         if(!is_dir($dir)) {
-            out('Error: ' . 'The app/settings/migrations directory does not appear to exist. Please create it.', 'red');
+            out('Error: ' . 'The db/migrations directory does not appear to exist. Please create it.', 'red');
             exit(1);
         }
 

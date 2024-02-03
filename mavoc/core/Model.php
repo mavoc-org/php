@@ -3,6 +3,7 @@
 namespace mavoc\core;
 
 use DateTime;
+use DateTimeZone;
 
 class Model {
     public $data = [];
@@ -16,7 +17,7 @@ class Model {
     public $tbl = '';
     public $clmns = [];
 
-    public function __construct($args) {
+    public function __construct($args = []) {
         // TODO: Restrict this to only valid args.
         $this->data = $args;
         if(isset($args['id'])) {
@@ -29,29 +30,75 @@ class Model {
         $this->tbl = $class::$table;
         if(isset($class::$columns)) {
             $this->clmns = $class::$columns;
+        } else {
+            // Load columns automatically
+            $columns = ao()->db->query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', ao()->env('DB_NAME'), $this->tbl);
+            $this->clmns = [];
+            foreach($columns as $column) {
+                $this->clmns[] = $column['COLUMN_NAME'];
+            }
         }
 
+        if(
+            ao()->hook('ao_model_process', true)
+            && ao()->hook('ao_model_process_' . $this->tbl, true)
+        ) {
+            $this->data = $this->process($this->data);
+        }
+        if(
+            ao()->hook('ao_model_process_dates', true)
+            && ao()->hook('ao_model_process_dates_' . $this->tbl, true)
+        ) {
+            $this->data = $this->processDates($this->data);
+        }
         $this->data = ao()->hook('ao_model_process_data', $this->data);
-        $this->data = ao()->hook('ao_model_process_' . $this->tbl . '_data', $this->data);
+        $this->data = ao()->hook('ao_model_process_data_' . $this->tbl, $this->data);
 
         $this->id = ao()->hook('ao_model_process_id', $this->id);
-        $this->id = ao()->hook('ao_model_process_' . $this->tbl . '_id', $this->id);
+        $this->id = ao()->hook('ao_model_process_id_' . $this->tbl, $this->id);
     }   
 
     public function init() {
     }
+
+    public function process($data) {
+        return $data;
+    }
+
+    public function processDates($data) {
+        $utc = new DateTimeZone('UTC');
+
+        foreach($data as $key => $value) {
+            if(is_string($value) && substr($value, -3) == '_at') {
+                $data[$key] = new DateTime($value, $utc);
+            }
+        }
+
+        return $data;
+    }
+
+    /*
+    public function processCent($data) {
+    }
+    public function processInt($data) {
+    }
+     */
 
     public static function all($return_type = 'all') {
         $class = get_called_class();
         $table = $class::$table;
         $output = [];
         if($table) {
+            $order = $class::$order;
+            $order = ao()->hook('ao_model_order', $order, $table);
+            $order = ao()->hook('ao_model_order_' . $table, $order, $table);
+
             $sql = 'SELECT * FROM ' . $table;
             // TODO: This is dangerous and needs to be cleaned up - only pass trusted data.
-            if(count($class::$order)) {
+            if(count($order)) {
                 $sql .= ' ORDER BY';
                 $count = 0;
-                foreach($class::$order as $field => $direction) {
+                foreach($order as $field => $direction) {
                     if($count == 0) {
                         $sql .= ' `' . $field . '` ' . $direction;
                     } else {
@@ -87,14 +134,23 @@ class Model {
                 $sql = 'SELECT * FROM ' . $table . ' WHERE ';
                 $values = [];
                 foreach($key as $k => $v) {
-                    if($first) {
-                        $sql .= $k . ' = ?';
-                        $values[] = $v;
-                        $first = false;
+                    if(!$first) {
+                        $sql .= ' AND ';
+                    }
+
+                    if(is_array($v) && count($v) == 2) {
+                        if(strtoupper($v[1]) == 'NOW()') {
+                            $sql .= '`' . $k . '` ' . $v[0] . ' NOW()';
+                        } else {
+                            $sql .= '`' . $k . '` ' . $v[0] . ' ?';
+                            $values[] = $v;
+                        }
                     } else {
-                        $sql .= ' AND ' . $k . ' = ?';
+                        $sql .= '`' . $k . '` = ?';
                         $values[] = $v;
                     }
+
+                    $first = false;
                 }
                 $sql .= ' LIMIT 1';
                 $data = ao()->db->query($sql, $values);
@@ -112,6 +168,64 @@ class Model {
         }
 
         return $output;
+    }
+
+    // TODO: *Need to add protection for user passed in columns.
+    public static function count($key = '', $value = '') {
+        $class = get_called_class();
+        $table = $class::$table;
+        $output = [];
+        if($table) {
+            if(is_array($key)) {
+                $first = true;
+                $sql = 'SELECT COUNT(id) as total FROM ' . $table . ' WHERE ';
+                $values = [];
+                foreach($key as $k => $v) {
+                    if($first) {
+                        // If array passed in for value, then the first item is the comparison operator.
+                        if(is_array($v) && count($v) == 2) {
+                            $sql .= $k . ' ' . $v[0] . ' ?';
+                            $values[] = $v[1];
+                        } else {
+                            $sql .= $k . ' = ?';
+                            $values[] = $v;
+                        }
+                        $first = false;
+                    } else {
+                        // If array passed in for value, then the first item is the comparison operator.
+                        if(is_array($v) && count($v) == 2) {
+                            $sql .= ' AND ' . $k . ' ' . $v[0] . ' ?';
+                            $values[] = $v[1];
+                        } else {
+                            $sql .= ' AND ' . $k . ' = ?';
+                            $values[] = $v;
+                        }
+                    }
+                }
+
+                $data = ao()->db->query($sql, $values);
+            } elseif($key) {
+                // If array passed in for value, then the first item is the comparison operator.
+                if(is_array($value) && count($value) == 2) {
+                    $sql = 'SELECT COUNT(id) as total FROM ' . $table . ' WHERE ' . $key . ' ' . $value[0] . ' ?';
+                    $data = ao()->db->query($sql, $value[1]);
+                } else {
+                    $sql = 'SELECT COUNT(id) as total FROM ' . $table . ' WHERE ' . $key . ' = ?';
+                    $data = ao()->db->query($sql, $value);
+                }
+            } else {
+                $sql = 'SELECT COUNT(id) as total FROM ' . $table;
+                $data = ao()->db->query($sql);
+            }
+
+            if(count($data)) {
+                return $data[0]['total'];
+            } else {
+                return 0;
+            }
+        }
+
+        return 0;
     }
 
     // TODO: Need to only allow approved values.
@@ -206,6 +320,20 @@ class Model {
         $this->id = $this->data['id'];
     }
 
+    public static function query() {
+        $args = func_get_args();
+        $data = ao()->db->query($args[0], array_slice($args, 1));
+
+        foreach($data as $item) {
+            if($return_type == 'data') {
+                $item = new $class($item);
+                $output[] = $item->data;
+            } else {
+                $output[] = new $class($item);
+            }
+        }
+    }
+
     public function save() {
         // Process the data both before and after.
         $this->data = ao()->hook('ao_model_process_data', $this->data);
@@ -216,7 +344,11 @@ class Model {
 
             // If item exists, run update otherwise run insert.
             if($item) {
-                $this->update($this->data);
+                $data = $this->data;
+                // The old updated_at value needs to be overwritten so unsetting it here.
+                // If the updated_at value needs to change then the update() method should be called directly.
+                unset($data['updated_at']);
+                $this->update($data);
             } else {
                 $this->insert($this->data);
             }
@@ -230,7 +362,9 @@ class Model {
         $this->data = ao()->hook('ao_model_save_' . $this->tbl . '_data', $this->data);
     }
 
-    public function update($input) {
+    // If update is being called using $this->save(), then updated_at is automatically unset
+    // May need to add a way so that $this->save() can modify updated_at value.
+    public function update($input = []) {
         $items = [];
         $items['updated_at'] = new DateTime();
 
@@ -264,31 +398,101 @@ class Model {
         ao()->db->query($sql, $args);
     }
 
+    public static function updateWhere($input = [], $key = '', $value = '') {
+        $class = get_called_class();
+        $items = [];
+        $items['updated_at'] = new DateTime();
+
+        $input = array_merge($items, $input);
+
+        // If columns are set, make sure only those are used.
+        // TODO: Make clmns static
+        //if(count($class::$clmns)) {
+            //$input = array_intersect_key($input, array_flip($this->clmns));
+        //}
+
+        // Make sure to include created_at and updated_at
+        $sql = 'UPDATE ' . $class::$table . ' SET ';
+        $args = [];
+        foreach($input as $k => $v) {
+            // Prep data (like converting DateTime to string
+            if($v instanceof DateTime) {
+                $v = $v->format('Y-m-d H:i:s');
+            }
+
+            if(count($args) > 0) {
+                $sql .= ', ';
+            }
+            $sql .= '`' . $k . '`' . ' = ?';
+            $args[] = $v;
+        }
+        if($key && $value) {
+            $sql .= ' WHERE `' . $key . '` = ?';
+            $args[] = $value;
+        } elseif(is_array($key)) {
+            $first = true;
+            $sql .= ' WHERE ';
+            foreach($key as $k => $v) {
+                if($first) {
+                    $sql .= '`' . $k . '` = ?';
+                    $args[] = $v;
+                    $first = false;
+                } else {
+                    $sql .= ' AND `' . $k . '` = ?';
+                    $args[] = $v;
+                }
+            }
+        }
+
+        //echo '<pre>'; print_r($args);die;
+        //echo $sql;die;
+        ao()->db->query($sql, $args);
+    }
+
     // TODO: *Need to add protection for user passed in columns.
     public static function where($key, $value = '', $return_type = 'all') {
         $class = get_called_class();
         $table = $class::$table;
         $output = [];
         if($table) {
+            $order = $class::$order;
+            $order = ao()->hook('ao_model_order', $order, $table);
+            $order = ao()->hook('ao_model_order_' . $table, $order, $table);
+
             if(is_array($key)) {
+                if($value == 'data') {
+                    $return_type = 'data';
+                }
                 $first = true;
                 $sql = 'SELECT * FROM ' . $table . ' WHERE ';
                 $values = [];
                 foreach($key as $k => $v) {
                     if($first) {
-                        $sql .= $k . ' = ?';
-                        $values[] = $v;
+                        // If array passed in for value, then the first item is the comparison operator.
+                        if(is_array($v) && count($v) == 2) {
+                            $sql .= $k . ' ' . $v[0] . ' ?';
+                            $values[] = $v[1];
+                        } else {
+                            $sql .= $k . ' = ?';
+                            $values[] = $v;
+                        }
                         $first = false;
                     } else {
-                        $sql .= ' AND ' . $k . ' = ?';
-                        $values[] = $v;
+                        // If array passed in for value, then the first item is the comparison operator.
+                        if(is_array($v) && count($v) == 2) {
+                            $sql .= ' AND ' . $k . ' ' . $v[0] . ' ?';
+                            $values[] = $v[1];
+                        } else {
+                            $sql .= ' AND ' . $k . ' = ?';
+                            $values[] = $v;
+                        }
                     }
                 }
                 // TODO: This is dangerous and needs to be cleaned up - only pass trusted data.
-                if(count($class::$order)) {
+                if(count($order)) {
                     $sql .= ' ORDER BY';
                     $count = 0;
-                    foreach($class::$order as $field => $direction) {
+                    foreach($order as $field => $direction) {
                         if($count == 0) {
                             $sql .= ' `' . $field . '` ' . $direction;
                         } else {
@@ -297,14 +501,25 @@ class Model {
                         $count++;
                     }
                 }
+
+                // TODO: This is dangerous and needs to be cleaned up - only pass trusted data.
+                if(isset($class::$limit)) {
+                    $sql .= ' LIMIT ' . $class::$limit;
+                }
                 $data = ao()->db->query($sql, $values);
             } else {
-                $sql = 'SELECT * FROM ' . $table . ' WHERE ' . $key . ' = ?';
+                // If array passed in for value, then the first item is the comparison operator.
+                if(is_array($value) && count($value) == 2) {
+                    $sql = 'SELECT * FROM ' . $table . ' WHERE ' . $key . ' ' . $value[0] . ' ?';
+                } else {
+                    $sql = 'SELECT * FROM ' . $table . ' WHERE ' . $key . ' = ?';
+                }
+
                 // TODO: This is dangerous and needs to be cleaned up - only pass trusted data.
-                if(count($class::$order)) {
+                if(count($order)) {
                     $sql .= ' ORDER BY';
                     $count = 0;
-                    foreach($class::$order as $field => $direction) {
+                    foreach($order as $field => $direction) {
                         if($count == 0) {
                             $sql .= ' `' . $field . '` ' . $direction;
                         } else {
@@ -313,7 +528,17 @@ class Model {
                         $count++;
                     }       
                 }       
-                $data = ao()->db->query($sql, $value);
+
+                // TODO: This is dangerous and needs to be cleaned up - only pass trusted data.
+                if(isset($class::$limit)) {
+                    $sql .= ' LIMIT ' . $class::$limit;
+                }
+
+                if(is_array($value) && count($value) == 2) {
+                    $data = ao()->db->query($sql, $value[1]);
+                } else {
+                    $data = ao()->db->query($sql, $value);
+                }
             }
             foreach($data as $item) {
                 if($return_type == 'data') {
@@ -328,18 +553,33 @@ class Model {
         return $output;
     }
 
-    public static function whereIn($key, $list = [], $return_type = 'all') {
+    public static function whereIn($key, $list = [], $and = [], $return_type = 'all') {
         $class = get_called_class();
         $table = $class::$table;
         $output = [];
-        if($table) {
+        $values = [];
+        if($table && count($list)) {
             $sql = 'SELECT * FROM ' . $table . ' WHERE `' . $key . '` IN (';
             foreach($list as $item) {
                 $sql .= '?,';
+                $values[] = $item;
             }
             $sql = trim($sql, ',');
             $sql .= ')';
-            $data = ao()->db->query($sql, $list);
+
+            if(is_array($and) && count($and)) {
+                foreach($and as $k => $v) {
+                    $sql .= ' AND ' . $k . ' = ?';
+                    $values[] = $v;
+                }
+            }
+
+            //$data = ao()->db->query($sql, $list);
+            $data = ao()->db->query($sql, $values);
+
+            if(is_string($and) && in_array($and, ['all', 'data'])) {
+                $return_type = $and;
+            }
 
             foreach($data as $item) {
                 if($return_type == 'data') {

@@ -6,6 +6,18 @@ use mavoc\core\Route;
 
 class Router {
     public function __construct() {
+        $dirs = ao()->hook('ao_router_plugin_dirs_start', []);
+        foreach($dirs as $dir) {
+            foreach(scandir($dir) as $file) {
+                $path = $dir . DIRECTORY_SEPARATOR . $file;
+                $path = ao()->hook('ao_router_plugin_path', $path);
+                if(is_file($path)) {
+                    require_once $path;
+                }
+            }
+        }
+
+
         $dir = ao()->env('AO_SETTINGS_DIR') . DIRECTORY_SEPARATOR . 'routes';
         $dir = ao()->hook('ao_router_app_dir', $dir);
         foreach(scandir($dir) as $file) {
@@ -17,7 +29,7 @@ class Router {
         }
 
 
-        $dirs = ao()->hook('ao_router_plugin_dirs', []);
+        $dirs = ao()->hook('ao_router_plugin_dirs_end', []);
         foreach($dirs as $dir) {
             foreach(scandir($dir) as $file) {
                 $path = $dir . DIRECTORY_SEPARATOR . $file;
@@ -70,7 +82,7 @@ class Router {
                 $routes = Route::$deletes;
             }
 
-            $routes = ao()->hook('ao_router_route_routes', $routes, [$req, $res]);
+            $routes = ao()->hook('ao_router_route_routes', $routes, $req, $res);
             $logged_in = ao()->session->user_id;
 
             foreach($routes as $route => $method) {
@@ -85,13 +97,13 @@ class Router {
                 $trimmed_path = trim($req->path, '/');
 
                 $match = $trimmed_route == $trimmed_path;
-                $match = ao()->hook('ao_router_route_match', $match, [$req, $res, $route]);
+                $match = ao()->hook('ao_router_route_match', $match, $req, $res, $route);
 
                 // If it contains '{' then it is a dynamic route.
                 if(!$match && strpos($route, '{') !== false) {
                     //echo preg_replace('|{[^}/]*}|', '[a-zA-Z0-9]*', $trimmed_route);die;
                     // This is a bit complicated. Turning the route into a regex then checking against the path.
-                    $match = preg_match('|^' . preg_replace('|{[^}/]*}|', '[a-zA-Z0-9-]*', $trimmed_route) . '$|', $trimmed_path);
+                    $match = preg_match('|^' . preg_replace('|{[^}/]*}|', '[a-zA-Z0-9_-]*', $trimmed_route) . '$|', $trimmed_path);
                     if($match) {
                         $req->params = $this->parseParams($trimmed_route, $trimmed_path);
                     }
@@ -103,10 +115,11 @@ class Router {
                         $res->redirect(ao()->env('APP_PRIVATE_HOME'));
                     }
                     if(!$logged_in && isset($restrictions['private'][$route])) {
+                        $req->session->data['login_redirect'] = $req->uri;
                         $res->redirect(ao()->env('APP_PUBLIC_HOME'));
                     }
 
-                    $method = ao()->hook('ao_router_route_method', $method, [$req, $res, $route]);
+                    $method = ao()->hook('ao_router_route_method', $method, $req, $res, $route);
 
                     if(is_array($method) && count($method) == 2) {
                         $class_name = $method[0];
@@ -149,14 +162,17 @@ class Router {
                         }
 
                         // Call the method on the controller
-                        if(ao()->hook('ao_router_route_controller_call', true, [$req, $res, $controller, $method_name])) {
+                        if(ao()->hook('ao_router_route_controller_call', true, $req, $res, $controller, $method_name)) {
                             $vars = call_user_func([$controller, $method_name], $req, $res);
                             $found = true;
 
                             // Dynamically pick the view file.
                             if($vars || is_array($vars)) {
                                 $view_dir = underscorify(str_replace('Controller', '', $class_name));
-                                $res->view($view_dir . '/' . $method_name, $vars);
+                                $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
+                                if(!$view_found) {
+                                    $res->json($vars);
+                                }
                             }
                         }
 
@@ -199,7 +215,7 @@ class Router {
                                 $method_name = methodify($parts[0]) . classify($req->method);
                             }
                             if($use_generic) {
-                                $class = '\ao\core\GenericController';
+                                $class = '\mavoc\core\GenericController';
                                 $method_name = 'view';
                                 if(is_file($file_view)) {
                                     $view = dashify($method);
@@ -229,7 +245,10 @@ class Router {
                                 // Dynamically pick the view file.
                                 if($vars || is_array($vars)) {
                                     $view_dir = underscorify(str_replace('Controller', '', $class_name));
-                                    $res->view($view_dir . '/' . $method_name, $vars);
+                                    $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
+                                    if(!$view_found) {
+                                        $res->json($vars);
+                                    }
                                 }
                             }
 
@@ -268,7 +287,7 @@ class Router {
                                 $method_name = methodify($parts[0]);
 
                                 if($use_generic) {
-                                    $class = '\ao\core\GenericController';
+                                    $class = '\mavoc\core\GenericController';
                                     $method_name = 'view';
                                     $view = dashify($parts[0]);
                                     $view = ao()->hook('ao_router_route_method_view_missing', $view);
@@ -294,7 +313,10 @@ class Router {
                                 // Dynamically pick the view file.
                                 if($vars || is_array($vars)) {
                                     $view_dir = underscorify(str_replace('Controller', '', $class_name));
-                                    $res->view($view_dir . '/' . $method_name, $vars);
+                                    $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
+                                    if(!$view_found) {
+                                        $res->json($vars);
+                                    }
                                 }
                             }
 

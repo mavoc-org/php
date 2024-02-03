@@ -14,6 +14,7 @@ class REST {
     public $headers = [];
     public $json = true;
     public $res_headers = [];
+    public $api_key = '';
 
     public function __construct($headers = [], $auth = '', $json = true) {
         // Not set up yet - will be used to simulate app calls without touching a network.
@@ -21,6 +22,7 @@ class REST {
 
         // If a string is passed in for headers, then it is part of an authorization header.
         if(is_string($headers)) {
+            $this->api_key = $headers;
             $headers = ['Authorization: Bearer ' . $headers];
         }
 
@@ -158,6 +160,9 @@ class REST {
 
     public function post($url, $data = [], $headers = [], $as_array = false) {
         $final_headers = array_merge($this->headers, $headers);
+
+        //echo '<pre>'; print_r($headers); echo '</pre>';
+        //echo '<pre>'; print_r($final_headers); echo '</pre>'; die;
 
         $ch = curl_init();
 

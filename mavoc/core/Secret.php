@@ -34,7 +34,7 @@ class Secret {
     public function decrypt($json) {
         $data = json_decode($json);
 
-        $key = sodium_hex2bin(ao()->env('AO_KEYS')[$data->key_index]);
+        $key = sodium_hex2bin(ao()->env('APP_KEYS')[$data->key_index]);
         $nonce = sodium_hex2bin($data->nonce);
         $ciphertext = sodium_hex2bin($data->ciphertext);
 
@@ -53,7 +53,7 @@ class Secret {
             throw new \Exception('There is not a valid key to encrypt the data.');
         }
         $key_index = $this->key_index;
-        $keys = ao()->env('AO_KEYS');
+        $keys = ao()->env('APP_KEYS');
         if(!isset($keys[$key_index])) {
             throw new \Exception('The specified key to encrypt the data is not available.');
         }

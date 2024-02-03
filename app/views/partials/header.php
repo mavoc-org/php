@@ -2,7 +2,7 @@
             <div class="box">
                 <h2><a href="/"><?php esc(ao()->env('APP_NAME')); ?></a></h2>
                 <nav>
-                    <ul>
+                    <menu>
                         <li><a href="/">Home</a></li>
                         <li><a href="/pricing">Pricing</a></li>
                         <li><a href="/contact">Contact</a></li>
@@ -12,7 +12,7 @@
                         <?php else: ?>
                         <li><a href="/login">Login</a></li>
                         <?php endif; ?>
-                    </ul>
+                    </menu>
                 </nav>
             </div>
         </header>

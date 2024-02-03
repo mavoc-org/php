@@ -9,6 +9,7 @@ class Hooks {
     public $filters = [];
     public $id = -1;
     public $keys = [];
+    public $used = [];
 
     public function __construct() {
     }
@@ -37,20 +38,47 @@ class Hooks {
         return $this->id;
     }
 
-    public function hook($key, $item = null, $args = []) {
+    //public function hook($key, $item = null, $args = []) {
+    //}
+    public function hook() {
+        $func_args = func_get_args();
+        $key = $func_args[0];
+        $item = null;
+        if(isset($func_args[1])) {
+            $item = $func_args[1];
+        }
+        $args = [];
+        $args[] = $item;
+        for($i = 2; $i < count($func_args); $i++) {
+            $args[] = $func_args[$i];
+        }
         if(ao()->env('AO_OUTPUT_HOOKS')) {
             echo $key;
             echo '<br>';
         }
         if(isset($this->filters[$key])) {
             foreach($this->filters[$key] as $group) {
-                foreach($group as $filter) {
-                    $item = call_user_func($filter, $item, $args);
+                foreach($group as $id => $filter) {
+                    if(!isset($this->used[$id])) {
+                        //$item = call_user_func($filter, $item, $args);
+                        $args[0] = call_user_func_array($filter, $args);
+                    } elseif(isset($this->used[$id]) && !$this->used[$id]) {
+                        $this->used[$id] = true;
+                        $args[0] = call_user_func_array($filter, $args);
+                    }
                 }
             }
         }
 
-        return $item;
+        return $args[0];
+    }
+
+    public function once($key, $callback, $priority = 10) {
+        $this->filter($key, $callback, $priority = 10);
+
+        $this->used[$this->id] = false;
+
+        return $this->id;
     }
 
     public function unfilter($key, $callback = null, $priority = 10) {

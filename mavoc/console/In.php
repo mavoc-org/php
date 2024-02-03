@@ -2,7 +2,7 @@
 
 namespace mavoc\console;
 
-// Need to add stdout and stderror interfaces.
+// Need to add stdin interface.
 class In {
     public $data = [];
     public $params = []; 
@@ -15,21 +15,6 @@ class In {
     }
 
     public function init() {
-    }
-
-    public function view($view, $args = []) {
-        $file = ao()->dir('app/views') . DIRECTORY_SEPARATOR . $view . '.php';
-
-        // Check if $view is a file
-        if(is_file($file)) {
-            extract($args);
-
-            $args = $this;
-
-            ob_start();
-            include $file;
-            $this->output .= ob_get_clean();
-        }
     }
 
 }

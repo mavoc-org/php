@@ -26,24 +26,43 @@ class Response {
     }
 
     public function error($message, $redirect = null) {
-        $this->flash('error', $message);
-
-        if($redirect !== false) {
-            // If fields are not set and there is $_POST data, automatically set the $_POST data as the fields.
-            if(!isset($this->session->next_flash['fields']) && count($this->req->data)) {
-                $this->flash('fields', $this->req->data);
-            }
-
-            if($redirect) {
-                $this->redirect($redirect);
+        if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
+            $output = [];
+            $output['status'] = 'error';
+            if(is_array($message)) {
+                $output['messages'] = $message;
             } else {
-                $this->back();
+                $output['messages'] = [$message];
+            }
+            http_response_code(400);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($output);
+            exit;
+        } else {
+            $this->flash('error', $message);
+
+            if($redirect !== false) {
+                // If fields are not set and there is $_POST data, automatically set the $_POST data as the fields.
+                if(!isset($this->session->next_flash['fields']) && count($this->req->data)) {
+                    $this->flash('fields', $this->req->data);
+                }
+
+                if($redirect) {
+                    $this->redirect($redirect);
+                } else {
+                    $this->back();
+                }
             }
         }
     }   
 
     public function flash($type, $value) {
         $this->session->flash($type, $value);
+    }
+
+    public function json($vars) {
+        header('Content-Type: application/json; charset=utf-8');
+        $this->output = json_encode($vars);
     }
 
     public function notice($type, $message, $redirect = null) {
@@ -70,7 +89,7 @@ class Response {
 		$path = $dir . $file;
 
         $args = array_merge($this->args, $args);
-        $args = ao()->hook('ao_response_partial_args', $args, [$view, $this, $this->req]);
+        $args = ao()->hook('ao_response_partial_args', $args, $view, $this->req, $this);
 
         // Be careful, this could be dangerous if used with untrusted data.
         // Also has some gotchas. Read the docs and comments: 
@@ -125,7 +144,7 @@ class Response {
         if($code == 404) {
             $title = 'Not Available';
             http_response_code($code);
-            $this->view('errors/404', compact('title'));
+            $this->view('alt/404', compact('title'));
         } else {
             // TODO: Make this exit cleaner like 404 above.
             // Maybe have a generic error page.
@@ -166,11 +185,18 @@ class Response {
                 $args['req'] = $this->req;
             }
             if(!isset($args['title'])) {
-                $args['title'] = ao()->env('APP_NAME');
+                $default_title = ao()->env('APP_NAME');
+                $default_title = ao()->hook('ao_response_default_title', $default_title);
+                $args['title'] = $default_title;
+            } else {
+                $args['title'] = ao()->hook('ao_response_preset_title', $args['title']);
             }
 
             // Save the args for use in the partials.
+            $args = ao()->hook('ao_response_view_args', $args, $view, $this->req, $this);
             $this->args = $args;
+
+            $file = ao()->hook('ao_response_view_file', $file, $view, $args, $this->req, $this);
 
             // Be careful, this could be dangerous if used with untrusted data.
             // Also has some gotchas. Read the docs and comments: 
@@ -180,7 +206,11 @@ class Response {
             ob_start();
             include $file;
             $this->output .= ob_get_clean();
+
+            return true;
         }
+
+        return false;
     }
 
     public function write($contents) {

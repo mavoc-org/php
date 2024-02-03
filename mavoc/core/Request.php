@@ -6,7 +6,10 @@ use mavoc\core\Modify;
 use mavoc\core\Validate;
 
 class Request {
+    public $ajax = false;
+    public $canonical = '';
     public $data = [];
+    public $ip = ''; 
     public $method = '';
     public $query = [];
     public $last_url = '/'; 
@@ -17,6 +20,7 @@ class Request {
     // https://en.wikipedia.org/wiki/HTTP_referer
     public $referrer = '';
     public $referer = ''; 
+    public $uri = ''; 
 
     public $res; 
     public $session; 
@@ -30,11 +34,14 @@ class Request {
 
     public function init() {
         $this->method = $_SERVER['REQUEST_METHOD'] ?? '';
+        $this->ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
         if(isset($_SERVER['REQUEST_URI'])) {
             $this->path = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+            $this->uri = $_SERVER['REQUEST_URI'];
         } else {
             $this->path = '';
+            $this->uri = '';
         }
 
         if(isset($_SERVER['HTTP_REFERER'])) {
@@ -49,6 +56,13 @@ class Request {
 
         $this->data = $_POST;
         $this->query = $_GET;
+
+        if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
+            $this->ajax = true;
+        }
+
+        $this->canonical = _uri($this->path);
+        $this->canonical = ao()->hook('ao_request_canonical', $this->canonical);
     }
 
     public function clean($input = '', $list = []) {

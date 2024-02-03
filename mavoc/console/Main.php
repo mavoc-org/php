@@ -2,7 +2,11 @@
 
 namespace mavoc\console;
 
-use app\settings\Overrides;
+if(is_file('vendor/autoload.php')) {
+    require 'vendor/autoload.php';
+}
+
+use app\App;
 
 //use mavoc\console\Args;
 use mavoc\console\In;
@@ -11,6 +15,7 @@ use mavoc\console\Route;
 use mavoc\console\Router;
 
 use mavoc\core\Confs;
+use mavoc\core\Console;
 use mavoc\core\DB;
 use mavoc\core\Email;
 use mavoc\core\Hooks;
@@ -29,6 +34,7 @@ require_once 'Router.php';
 require_once 'mavoc/core/Clean.php';
 require_once 'mavoc/core/Cleaners.php';
 require_once 'mavoc/core/Confs.php';
+require_once 'mavoc/core/Console.php';
 require_once 'mavoc/core/DB.php';
 require_once 'mavoc/core/GenericController.php';
 require_once 'mavoc/core/Email.php';
@@ -59,6 +65,7 @@ spl_autoload_register(function($class) {
 });
 
 class Main {
+    public $app;
     public $confs;
     public $db;
     public $email;
@@ -66,13 +73,20 @@ class Main {
     public $in;
     public $hooks;
     public $out;
-    public $overrides;
-    public $plugs;
+    public $plugins;
     public $router;
+
+    public $type = 'console';
 
     public function __construct() {
         // Load environment variables.
-        $this->envs = require '.env.php';
+        $this->envs = require __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .'.env.php';
+    }
+
+    // This will not work well with interactive commands.
+    // All output is suppressed.
+    public function command($command) {
+        return $this->console->call($command);
     }
 
     public function conf($key, $value = null) {
@@ -113,8 +127,24 @@ class Main {
         return $this->hooks->filter($key, $args, $priority);
     }
 
-    public function hook($key, $item = null, $args = []) {
-        return $this->hooks->hook($key, $item, $args);
+    //public function hook($key, $item = null, $args = []) {
+        //return $this->hooks->hook($key, $item, $args);
+    //}
+    public function hook() {
+        $func_args = func_get_args();
+        $key = $func_args[0];
+        $item = null;
+        if(isset($func_args[1])) {
+            $item = $func_args[1];
+        }
+        $args = [];
+        $args[] = $key;
+        $args[] = $item;
+        for($i = 2; $i < count($func_args); $i++) {
+            $args[] = $func_args[$i];
+        }
+        //return $this->hooks->hook($key, $item, $args);
+        return call_user_func_array([$this->hooks, 'hook'], $args);
     }
 
     public function init() {
@@ -128,7 +158,7 @@ class Main {
         if(is_file('..' . DIRECTORY_SEPARATOR . '.boot.php')) {
             require '..' . DIRECTORY_SEPARATOR . '.boot.php';
         }
-        $this->hook('ao_start');
+        $this->hook('ao_console_start');
 
         // Have a separate creation and then init for hook purposes.
         // Allows setting things up in the constructor and then making 
@@ -152,16 +182,21 @@ class Main {
         $func = $this->hook('ao_confs_init', $func);
         call_user_func($func);
 
+        $this->console = new Console();
+        $this->console = $this->hook('ao_console', $this->console);
+        $func = [$this->console, 'init'];
+        $func = $this->hook('ao_console_init', $func);
+        call_user_func($func);
 
         // Maybe have this fixed with autoloading
-        $overrides_file = ao()->env('AO_SETTINGS_DIR') . DIRECTORY_SEPARATOR . 'Overrides.php';
-        $overrides_file = $this->hook('ao_overrides_file', $overrides_file);
-        if(is_file($overrides_file)) {
-            require_once $overrides_file;
-            $this->overrides = new Overrides();
-            $this->overrides = $this->hook('ao_overrides', $this->overrides);
-            $func = [$this->overrides, 'init'];
-            $func = $this->hook('ao_overrides_init', $func);
+        $app_file = ao()->env('AO_APP_DIR') . DIRECTORY_SEPARATOR . 'App.php';
+        $app_file = $this->hook('ao_app_file', $app_file);
+        if(is_file($app_file)) {
+            require_once $app_file;
+            $this->app = new App();
+            $this->app = $this->hook('ao_app', $this->app);
+            $func = [$this->app, 'init'];
+            $func = $this->hook('ao_app_init', $func);
             call_user_func($func);
         }
 
@@ -181,28 +216,34 @@ class Main {
 
 
         $this->router = new Router();
-        $this->router = $this->hook('ao_router', $this->router);
+        $this->router = $this->hook('ao_console_router', $this->router);
         $func = [$this->router, 'init'];
         $func = $this->hook('ao_console_router_init', $func);
         call_user_func($func);
 
 
         $this->in = new In();
-        $this->in = $this->hook('ao_console_in', $this->in);
+        $this->in = $this->hook('ao_in', $this->in);
         $func = [$this->in, 'init'];
-        $func = $this->hook('ao_console_in_init', $func);
+        $func = $this->hook('ao_in_init', $func);
         call_user_func($func);
 
 
         $this->out = new Out();
-        $this->out = $this->hook('ao_console_out', $this->out);
+        $this->out = $this->hook('ao_out', $this->out);
         $func = [$this->out, 'init'];
-        $func = $this->hook('ao_console_out_init', $func);
+        $func = $this->hook('ao_out_init', $func);
         call_user_func($func);
 
-		$this->router->route($this->in, $this->out);
+        if($this->hook('ao_console_route', true)) {
+            $this->router->route($this->in, $this->out);
+        }
 
         $this->hook('ao_console_end');
+    }
+
+    public function once($key, $args = [], $priority = 10) {
+        return $this->hooks->once($key, $args, $priority);
     }
 
     public function unfilter($key, $args = [], $priority = 10) {
