@@ -78,6 +78,9 @@ class Main {
 
     public $type = 'console';
 
+    // This will always be false because console commands do not have a session.
+    public $session_initialized = false;
+
     public function __construct() {
         // Load environment variables.
         $this->envs = require __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .'.env.php';

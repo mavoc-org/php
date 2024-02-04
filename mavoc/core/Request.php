@@ -2,9 +2,6 @@
 
 namespace mavoc\core;
 
-use mavoc\core\Modify;
-use mavoc\core\Validate;
-
 class Request {
     public $ajax = false;
     public $canonical = '';
@@ -19,8 +16,8 @@ class Request {
     // The header is misspelled so include both versions so you never have to remember which spelling to use.
     // https://en.wikipedia.org/wiki/HTTP_referer
     public $referrer = '';
-    public $referer = ''; 
-    public $uri = ''; 
+    public $referer = '';
+    public $uri = '';
 
     public $res; 
     public $session; 

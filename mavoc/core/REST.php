@@ -66,6 +66,22 @@ class REST {
         }
 
         $response = curl_exec($ch);
+        /*
+        if($response === false) {        
+            echo 'Error in cURL : ' . curl_error($ch);
+        } 
+        echo 'Request Headers:';
+        echo '<br>';
+        echo '<pre>'; print_r($final_headers); echo '</pre>';
+        echo '<br>';
+        echo 'Response Headers:';
+        echo '<br>';
+        echo '<pre>'; print_r($this->res_headers); echo '</pre>';
+        echo '<br>';
+        echo 'Response:';
+        echo '<br>';
+        echo '<pre>'; print_r($response); echo '</pre>';
+        // */
         curl_close($ch);
 
         // TODO: Probably need to add some error checking for json_decode.

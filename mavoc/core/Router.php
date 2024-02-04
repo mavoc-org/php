@@ -70,12 +70,20 @@ class Router {
 
             if($req->method == 'GET') {
                 $routes = Route::$gets;
+                if(isset(Route::$restrictions['GET'])) {
                 $restrictions = Route::$restrictions['GET'];
+                } else {
+                    $restrictions = [];
+                }
             } elseif($req->method == 'PATCH') {
                 $routes = Route::$patches;
             } elseif($req->method == 'POST') {
                 $routes = Route::$posts;
+                if(isset(Route::$restrictions['POST'])) {
                 $restrictions = Route::$restrictions['POST'];
+                } else {
+                    $restrictions = [];
+                }
             } elseif($req->method == 'PUT') {
                 $routes = Route::$puts;
             } elseif($req->method == 'DELETE') {

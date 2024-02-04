@@ -2,6 +2,7 @@
 
 // Up
 $up = function($db) {
+    /*
     $sql = <<<'SQL'
 CREATE TABLE `password_resets` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -16,14 +17,31 @@ CREATE TABLE `password_resets` (
     PRIMARY KEY (`id`)
 );
 SQL;
+*/
+
+    $sql = $db->createTable('password_resets', [
+        'id' => 'id',
+        'user_id' => 'id',
+        'token' => 'string',
+        'created_ip' => 'string',
+        'used_ip' => 'string',
+        'used' => ['type' => 'boolean', 'default' => 0],
+        'expires_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ]);
     $db->query($sql);
 };
 
 // Down
 $down = function($db) {
+    /*
     $sql = <<<'SQL'
 DROP TABLE `password_resets`;
 SQL;
+*/
+
+    $sql = $db->dropTable('password_resets');
     $db->query($sql);
 
 };

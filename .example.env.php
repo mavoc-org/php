@@ -26,7 +26,7 @@ return [
     'APP_TERMS_UPDATED' => 'July 15, 2022',
 
 	// The 'list' option is only used for simple, non-database sites.
-    'APP_LOGIN_TYPE' => 'db', // Options: list, db
+    'APP_LOGIN_TYPE' => 'db', // Options: none, list, db (or options from other plugins)
     // If 'list' is chosen, these users will be available for login. The number is the user_id.
     'APP_LOGIN_USERS' => [
         1 => ['email' => 'user@example.com', 'password' => 'example'],
@@ -40,6 +40,7 @@ return [
 
     'APP_PRIVATE_HOME' => '/account',
     'APP_PUBLIC_HOME' => '/login',
+    'APP_ANALYTICS' => '<script></script>', 
 
     'APP_KEYS' => $keys, 
 
@@ -56,6 +57,7 @@ return [
     'AO_DB_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'db',
     'AO_PLUGIN_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'plugins',
     'AO_SETTINGS_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'settings',
+    'AO_STORAGE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'storage',
     'AO_MAVOC_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc',
     'AO_MAVOC_CONSOLE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc' . DIRECTORY_SEPARATOR . 'console',
     'AO_MAVOC_CORE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc' . DIRECTORY_SEPARATOR . 'core',

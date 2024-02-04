@@ -2,6 +2,7 @@
 
 // Up
 $up = function($db) {
+    /*
     $sql = <<<'SQL'
 CREATE TABLE `usernames` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -13,14 +14,28 @@ CREATE TABLE `usernames` (
     PRIMARY KEY (`id`)
 );
 SQL;
+*/
+
+    $sql = $db->createTable('usernames', [
+        'id' => 'id',
+        'user_id' => 'id',
+        'name' => 'string',
+        'primary' => ['type' => 'boolean', 'default' => 0],
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ]);
     $db->query($sql);
 };
 
 // Down
 $down = function($db) {
+    /*
     $sql = <<<'SQL'
 DROP TABLE `usernames`;
 SQL;
+*/
+
+    $sql = $db->dropTable('usernames');
     $db->query($sql);
 
 };

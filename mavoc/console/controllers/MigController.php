@@ -118,6 +118,14 @@ PHP;
     public function init($in, $out) {
         try {
             // Set up _migrations table.
+            $sql = $this->db->createTable('_migrations', [
+                'id' => 'id',
+                'migration' => 'string',
+                'created_at' => 'datetime',
+                'updated_at' => 'datetime',
+            ]);
+
+            /*
             $sql = <<<'SQL'
 CREATE TABLE `_migrations` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -127,12 +135,23 @@ CREATE TABLE `_migrations` (
     PRIMARY KEY (`id`)
 );
 SQL;
+*/
             //$this->pdo->exec($sql);
             $this->db->query($sql);
 
             // Set up _deletions table.
             // Inspired by: https://brandur.org/soft-deletion
             // With discussion: https://news.ycombinator.com/item?id=32156009
+            $sql = $this->db->createTable('_deletions', [
+                'id' => 'id',
+                'original_id' => 'id',
+                'original_table' => 'string',
+                'data' => 'text',
+                'created_at' => 'datetime',
+                'updated_at' => 'datetime',
+            ]);
+
+            /*
             $sql = <<<'SQL'
 CREATE TABLE `_deletions` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -144,10 +163,23 @@ CREATE TABLE `_deletions` (
     PRIMARY KEY (`id`)
 );
 SQL;
+             */
             //$this->pdo->exec($sql);
             $this->db->query($sql);
 
             // Set up _logs table.
+            $sql = $this->db->createTable('_logs', [
+                'id' => 'id',
+                'original_id' => 'id',
+                'type' => 'string',
+                'action' => 'string',
+                'description' => 'text',
+                'extra' => 'text',
+                'created_at' => 'datetime',
+                'updated_at' => 'datetime',
+            ]);
+
+            /*
             $sql = <<<'SQL'
 CREATE TABLE `_logs` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -162,6 +194,7 @@ CREATE TABLE `_logs` (
     PRIMARY KEY (`id`)
 );
 SQL;
+             */
             //$this->pdo->exec($sql);
             $this->db->query($sql);
         } catch(\PDOException $e) {
@@ -207,32 +240,26 @@ $content = <<<PHP
 
 // Up
 \$up = function(\$db) {
-    \$sql = <<<'SQL'
-CREATE TABLE `$table` (
-    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    \$sql = \$db->createTable('$table', [
+        'id' => 'id',
 
-    `user_id` bigint unsigned NOT NULL DEFAULT '0',
-    `name` varchar(255) NOT NULL DEFAULT '',
-    `content` longtext,
-    `total_cents` int NOT NULL DEFAULT '0',
-    `quantity_int2` int NOT NULL DEFAULT '0',
-    `extra` longtext,
-    `default` tinyint(1) NOT NULL DEFAULT '0',
-    `created_at` timestamp NULL DEFAULT NULL,
-    `updated_at` timestamp NULL DEFAULT NULL,
-    PRIMARY KEY (`id`)
-);
-SQL;
+        'user_id' => 'id',
+        'name' => 'string',
+        'content' => 'text',
+        'total_cents' => ['type' => 'integer', 'default' => 0],
+        'quantity_int2' => ['type' => 'integer', 'default' => 0],
+        'extra' => 'text',
+        'default' => ['type' => 'boolean', 'default' => 0],
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ]);
 
     \$db->query(\$sql);
 };
 
 // Down
 \$down = function(\$db) {
-    \$sql = <<<'SQL'
-DROP TABLE `$table`;
-SQL;
-
+    \$sql = \$db->dropTable('$table');
     \$db->query(\$sql);
 };
 
@@ -286,7 +313,13 @@ PHP;
                 include $migration['path'];
                 $up($this->db);
 
-                $query = $this->db->query('INSERT INTO _migrations SET migration = ?, created_at = ?, updated_at = ?', $migration['file'], now(), now());
+                //$query = $this->db->query('INSERT INTO _migrations SET migration = ?, created_at = ?, updated_at = ?', $migration['file'], now(), now());
+
+                $args = [];
+                $args['migration'] = $migration['file'];
+                $args['created_at'] = new DateTime();
+                $args['updated_at'] = new DateTime();
+                $this->db->insert('_migrations', $args);
 
 
                 // Output
