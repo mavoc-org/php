@@ -7,6 +7,7 @@ use mavoc\core\Model;
 
 class User extends Model {
     public static $table = 'users';
+    public static $private = ['email', 'password'];
 
     public function changePassword($old_password, $new_password) {
         if(ao()->env('APP_LOGIN_TYPE') == 'db') {
@@ -119,10 +120,10 @@ class User extends Model {
             $user = User::by('email', $email);
 
             if($user) {
-                if(password_verify($password, $user->data['password'])) {
+                if(password_verify($password, $user->all['password'])) {
 
                     // TODO: Need to make this more robust.
-                    unset($user->data['password']);
+                    unset($user->all['password']);
 
                     $user->session();
                     return true;
@@ -169,4 +170,5 @@ class User extends Model {
         ao()->session->user = $this;
         ao()->session->user_id = $this->data['id'];
     }
+
 }

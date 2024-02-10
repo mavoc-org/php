@@ -3,11 +3,20 @@
 namespace app\controllers;
 
 use app\models\User;
+use app\models\Username;
 
 class AuthController {
     public function account($req, $res) {
+       $usernames = Username::where('user_id', $req->user->data['id']);
+      
+        // First time logging in, make sure they have a username
+        if(count($usernames) == 0) {    
+            $res->redirect('/username/add');
+        }
+
+        $res->fields['username'] = $usernames[0]->data['name'];
         $res->fields['name'] = $req->user->data['name'];
-        $res->fields['email'] = $req->user->data['email'];
+        $res->fields['email'] = $req->user->all['email'];
 
         return ['title' => 'Account'];
     }

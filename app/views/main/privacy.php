@@ -12,11 +12,11 @@
                     <p><b>Contact Information</b></p>
                     <p>This web site is maintained and operated by <b><?php esc(ao()->env('APP_AUTHOR')); ?></b>.</p>
                     <p>The mailing address for <?php esc(ao()->env('APP_AUTHOR')); ?> is<br /><b> <?php echo nl2br(_esc(ao()->env('APP_AUTHOR_ADDRESS'))); ?></b></p>  
-                    <p>We can also be reached using our <a href="/contact/">contact form</a>.</p>
+                    <p>We can also be reached using our support system.</p>
                     <p><a name="1"></a><b>Our Commitment To Privacy</b></p>
                     <p>Your privacy is important to us. To better protect your privacy we provide this notice explaining our online information practices and the choices you can make about the way your information is collected and used. To make this notice easy to find, a link can be found at the bottom of each page of the website.</p>
                     <p><a name="2"></a><b>The Information We Collect:</b></p>
-                    <p>This notice applies to all information collected or submitted on the <?php esc(ao()->env('APP_NAME')); ?>NumbersQ website. On some pages, you can order products, make requests, and register to receive materials. The types of personal information collected at these pages are: <br />&#8211; contact information<br />&#8211; billing information<br />&#8211; account information</p>
+                    <p>This notice applies to all information collected or submitted on the <?php esc(ao()->env('APP_NAME')); ?> website. On some pages, you can order products, make requests, and register to receive materials. The types of personal information collected at these pages are: <br />&#8211; contact information<br />&#8211; billing information<br />&#8211; account information</p>
                     <p><a name="3"></a><b>The Way We Use Information:</b></p>
                     <p>We use the information you provide about yourself when placing an order only to complete that order. We do not share this information with outside parties except to the extent necessary to complete that order.</p>
                     <p>We use return email addresses to answer the email we receive. Such addresses are not used for any other purpose and are not shared with outside parties.</p>

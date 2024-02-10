@@ -9,7 +9,8 @@ use DateTime;
 use DateTimeZone;
 
 class App {
-    public $debug = false;
+    public $debug;
+
     public function init() {
 		// Run migrations if the user is not running a command line command and the db needs to be migrated.
 		if(!defined('AO_CONSOLE_START') && ao()->env('DB_USE') && ao()->env('DB_INSTALL')) {
@@ -19,24 +20,29 @@ class App {
         ao()->filter('ao_response_partial_args', [$this, 'cacheDate']);
         ao()->filter('ao_model_process_dates_timezone', [$this, 'processTimezone']);
 
-        if($this->debug) {
-            ao()->filter('ao_final_exception_redirect', [$this, 'finalException']);
+        if(ao()->env('APP_DEBUG')) {
+            // Maybe have this fixed with autoloading
+            $debug_file = ao()->env('AO_BASE_DIR') . DIRECTORY_SEPARATOR . '.Debug.php';
+            $debug_file = ao()->hook('app_debug_file', $debug_file);
+            if(is_file($debug_file)) {
+                require_once $debug_file;
+                $this->debug = new Debug();
+                $this->debug = ao()->hook('app_debug', $this->debug);
+                $func = [$this->debug, 'init'];
+                $func = ao()->hook('app_debug_init', $func);
+                call_user_func($func);
+                $this->debug = ao()->hook('app_debug_initialized', $this->debug);
+            }
         }
     }
 
     public function cacheDate($vars, $view, $req, $res) {
         if($view == 'head' || $view == 'foot') {
-            $vars['cache_date'] = '2022-07-15';
+            $vars['cache_date'] = '2024-02-07';
         }
 
         return $vars;
     }
-
-    public function finalException($redirect, $e) {
-        echo 'died before redirect';
-        dd($e);
-    }
-
 
     public function install() {
         try {

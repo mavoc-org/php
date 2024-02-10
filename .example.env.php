@@ -15,6 +15,7 @@ return [
     // App
     'APP_NAME' => 'Example', 
     'APP_ENV' => 'dev',
+    'APP_DEBUG' => false, // Loads the Debug.php file
     'APP_HOST' => 'www.example.com',
     'APP_SITE' => 'https://www.example.com',
     // Author information used on Terms and Privacy pages.
@@ -24,6 +25,7 @@ return [
     // Terms and Privacy info
     'APP_PRIVACY_UPDATED' => 'July 15, 2022',
     'APP_TERMS_UPDATED' => 'July 15, 2022',
+    'APP_DESCRIPTION' => 'A simple app.', 
 
 	// The 'list' option is only used for simple, non-database sites.
     'APP_LOGIN_TYPE' => 'db', // Options: none, list, db (or options from other plugins)

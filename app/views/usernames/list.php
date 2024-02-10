@@ -7,17 +7,9 @@
         <div id="app">
             <?php $res->partial('header'); ?>
             <main>
-                <section class="box">
-                    <h2><?php esc($title); ?></h2>
-
-                    <?php $res->html->messages(); ?>
-                    <form method="POST">
-                        <?php $res->html->select('Timezone', 'timezone', $timezones); ?>
-
-                        <?php $res->html->submit('Save'); ?>
-                    </form>
-
-                </section>
+                <div class="page">
+                    Username list page.
+                </div>
             </main>
             <?php $res->partial('footer'); ?>
         </div>

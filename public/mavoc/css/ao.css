@@ -123,6 +123,11 @@ hr {
     margin-bottom: 16px;
 }
 
+#app > header .logo {
+    vertical-align: text-bottom;
+    margin-right: 8px;
+}
+
 #app > header h2 {
     margin-bottom: 0;
 }
@@ -138,6 +143,30 @@ hr {
     padding: 0 1rem;
 }
 
+
+/* BOF Navigation */
+#toggle_menu {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    border: 0;
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
+#toggle_menu + label {
+    position: relative;
+    display: inline-block;
+    padding: 0.5rem;
+    background: #fff;
+    cursor: pointer;
+    user-select: none;
+    line-height: normal;
+}
+/* EOF Navigation */
+
 #app > footer {
     background: #ffffff;
     box-shadow: 0 6px 14px 0 #0000001a;
@@ -152,6 +181,9 @@ hr {
     height: 100%;
     margin: 0 auto;
     padding: 1rem;
+}
+#app > footer > .box > * {
+    width: 50%;
 }
 
 #app > footer ul {
@@ -273,14 +305,21 @@ button.close:hover {
     background-color: #d4edda; 
     border-color: #c3e6cb;     
 }   
+.notice.warn {             
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}   
 .notice p:last-child {         
     margin-bottom: 0;
 }
 /* EOF Notices */
 
 /* There should really be a browser standard for screen reader only content: 
+ * https://css-tricks.com/inclusively-hidden/
  * https://github.com/h5bp/main.css/issues/12
  */   
+/*
 .screen_reader { 
     position: absolute;        
     margin: 0;
@@ -291,6 +330,16 @@ button.close:hover {
     border: 0;
     white-space: nowrap;
     clip-path: inset(50%);     
+} 
+*/
+.screen_reader:not(:focus):not(:active) {
+    clip: rect(0 0 0 0); 
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap; 
+    width: 1px;
 } 
 
 .overlay {
@@ -373,6 +422,37 @@ button.close:hover {
     #app > footer > .box {
         width: auto;
     }
+
+    /* BOF Navigation */
+    #toggle_menu + label {
+        background: url(/mavoc/images/tabler-icons/menu-2.svg) no-repeat;
+        width: 24px;
+        height: 24px;
+    }
+    #toggle_menu + label + menu {
+        display: none;
+    }
+    #toggle_menu:checked + label {
+        background: url(/mavoc/images/tabler-icons/x.svg) no-repeat;
+    }
+    #toggle_menu:checked + label + menu {
+        display: block;
+        position: absolute;
+        top: 42px;
+        left: 0;
+        width: 100%;
+        height: calc(100vh - 36px);
+        z-index: 1;
+        padding: 1rem;
+        padding-left: 50%;
+        background: #fff;
+    }
+    #toggle_menu:checked + label + menu li {
+        display: block;
+        margin: 1rem 0;
+    }
+    /* EOF Navigation */
+
 
     /* BOF Make Table Vertical */
     table {

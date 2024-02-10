@@ -656,6 +656,8 @@ class ReservedService {
 
         ];
 
+        $output = ao()->hook('app_service_reserved_usernames', $output);
+
         return $output;
     }
 }

@@ -5,14 +5,16 @@
     </head>
     <body class="<?php $res->pathClass(); ?>">
         <div id="app">
-            <?php $res->partial('header-private'); ?>
+            <?php $res->partial('header'); ?>
             <main>
-                <section class="box">
+                <div class="page">
                     <h2>Account</h2>
 
                     <?php if(ao()->env('APP_LOGIN_TYPE') == 'db'): ?>
                         <?php $res->html->messages(); ?>
                         <form method="POST">
+                            <?php $res->html->text('Username', 'username', '', '', 'disabled'); ?>
+
                             <?php $res->html->text('Full Name', 'name'); ?>
 
                             <?php $res->html->text('Email'); ?>
@@ -25,11 +27,15 @@
                         </form>
                     <?php else: ?>
                         <form method="POST">
+                            <?php $res->html->text('Username', 'username', '', '', 'disabled'); ?>
+
+                            <?php $res->html->text('Full Name', 'name', '', '', 'disabled'); ?>
+
                             <?php $res->html->text('Email', '', '', '', 'disabled'); ?>
                         </form>
                     <?php endif; ?>
 
-                </section>
+                </div>
             </main>
             <?php $res->partial('footer'); ?>
         </div>

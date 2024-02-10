@@ -51,6 +51,19 @@ if(!function_exists('dashify')) {
     }
 }
 
+if(!function_exists('data')) {
+    function data($input) {   
+        $output = [];
+        if(is_array($input)) {
+            foreach($input as $i => $item) {
+                $output[$i] = simplify($item->data);
+            }
+        } else {
+        }
+        return $output;
+    }   
+} 
+
 if(!function_exists('dd')) {
     function dd($input) {
         echo '<pre>'; 
@@ -207,6 +220,14 @@ if(!function_exists('esc')) {
     }   
 } 
 
+if(!function_exists('meta')) {
+    function meta($pagination) {   
+        $output = [];
+        $output = $pagination;
+        return $output;
+    }   
+} 
+
 if(!function_exists('methodify')) {
     function methodify($input) {
         $words = preg_replace('/[\s,-_]+/', ' ', strtolower($input));
@@ -286,6 +307,23 @@ if(!function_exists('returnTrue')) {
     function returnTrue() {   
         return true;
     }   
+}
+
+if(!function_exists('simplify')) {
+    function simplify($input) {
+        $output = [];
+        foreach($input as $key => $item) {
+            if(is_array($item)) {
+                $output[$key] = simplify($item);
+            } elseif($item instanceof DateTime) {
+                $output[$key] = $item->format('c');
+            } else {
+                $output[$key] = $item;
+            }
+        }
+
+        return $output;
+    }
 }
 
 if(!function_exists('underscorify')) {

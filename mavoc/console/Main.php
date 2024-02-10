@@ -112,7 +112,7 @@ class Main {
             $output = $this->envs[$key] ?? null;
             return $output;
         } else {
-            $output = $this->envs[$key];
+            $output = $this->envs[$key] ?? null;
             $output = $this->hook('ao_env', $output);
             $output = $this->hook('ao_env_' . $key, $output);
             return $output;

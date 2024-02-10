@@ -321,7 +321,13 @@ class Validators {
     }   
 
     public function password($input, $field) {
-        if(!isset($input[$field]) || strlen($input[$field]) < 8) {
+        // Only use this for testing when you want to register users without any password limitations.
+        if(ao()->env('PASSWORD_SKIP_VALIDATION')) {
+            return true;
+        }
+
+        $length = ao()->hook('ao_validator_password_length', 8);
+        if(!isset($input[$field]) || strlen($input[$field]) < $length) {
             return false;
         }   
 
