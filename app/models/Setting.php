@@ -22,6 +22,12 @@ class Setting extends Model {
             'value' => 'Sunday',
             'editable' => 1,
         ],
+        'premium_level' => [
+            'name' => 'Premium Level',
+            'key' => 'premium_level',
+            'value' => 100,
+            'editable' => 0,
+        ],
     ];
 
     public static function get($user_id = 0, $key = null) {

@@ -7,6 +7,7 @@ if(is_file('../vendor/autoload.php')) {
 }
 
 use app\App;
+use app\Local;
 
 use mavoc\console\Main as ConsoleMain;
 
@@ -71,6 +72,7 @@ class Mavoc {
     public $envs = [];
     public $hooks;
     public $html;
+    public $local;
     public $plugins;
     public $router;
     public $session;
@@ -198,6 +200,18 @@ class Mavoc {
             $this->app = $this->hook('ao_app_initialized', $this->app);
         }
 
+        $local_file = ao()->env('AO_BASE_DIR') . DIRECTORY_SEPARATOR . '.Local.php';
+        $local_file = $this->hook('ao_local_file', $local_file);
+        if(is_file($local_file)) {
+            require_once $local_file;
+            $this->local = new Local();
+            $this->local = $this->hook('ao_local', $this->local);
+            $func = [$this->local, 'init'];
+            $func = $this->hook('ao_local_init', $func);
+            call_user_func($func);
+            $this->local = $this->hook('ao_local_initialized', $this->local);
+        }
+
         $this->hook('ao_ready');
 
         $db_use = ao()->env('DB_USE');
@@ -285,17 +299,30 @@ class Mavoc {
         try {
             $this->router->route($this->request, $this->response);
         } catch(Exception $e) {
-            $redirect = $e->getRedirect();
-            $redirect = $this->hook('ao_final_exception_redirect', $redirect, $e, $this->request, $this->response);
-            $this->response->error($e->getMessage(), $redirect);
-        } catch(\Exception $e) {
+            $response_type = $e->getResponseType();
+
+            if($response_type == 'html') {
+                $redirect = $e->getRedirect();
+                $redirect = $this->hook('ao_final_exception_redirect', $redirect, $e, $this->request, $this->response);
+                $this->response->error($e->getMessage(), $redirect);
+            } elseif($response_type == 'json') {
+                $output = [];
+                $output['status'] = 'error';
+                $output['messages'] = [$e->getMessage()];
+                $output['meta'] = new \stdClass();
+                $output['data'] = new \stdClass();
+
+                echo json_encode($output);
+                exit;
+            }
+        } catch(\Throwable $e) {
             if(isset($this->request->last_url)) {
                 $redirect = $this->request->last_url;
             } else {
                 $redirect = '/';
             }
             $redirect = $this->hook('ao_final_exception_redirect', $redirect, $e, $this->request, $this->response);
-            
+
             $this->response->error($e->getMessage(), $redirect);
         }
 

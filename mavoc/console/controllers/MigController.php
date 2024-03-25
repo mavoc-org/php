@@ -26,6 +26,7 @@ class MigController {
         $file = '';
         $file .= $today->format('Y_m_d_H_i_s_');
         $file .= implode('_', $in->params);
+        $file .= '_alter';
         $file .= '.php';
 
         // Check if the file already exists
@@ -46,6 +47,34 @@ $content = <<<PHP
 
 // Up
 \$up = function(\$db) {
+    \$sql = \$db->alterTableRename('$table', [
+        'old_col_name' => 'new_col_name',
+    ]);
+    \$db->query(\$sql);
+
+
+    \$sql = \$db->alterTableModify('$table', [
+        'post' => 'text',
+    ]);
+    \$db->query(\$sql);
+
+
+    \$sql = \$db->alterTableAdd('$table', [
+        'user_id' => ['type' => 'id', 'after' => 'post_id'],
+
+        'user_id' => 'id',
+        'name' => 'string',
+        'content' => 'text',
+        'total_cents' => ['type' => 'integer', 'default' => 0],
+        'quantity_int2' => ['type' => 'integer', 'default' => 0],
+        'extra' => 'text',
+        'default' => ['type' => 'boolean', 'default' => 0],
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ]);
+    \$db->query(\$sql);
+
+/*
     \$sql = <<<'SQL'
 ALTER TABLE `$table` RENAME COLUMN old_col_name TO new_col_name;
 ALTER TABLE `$table`
@@ -60,10 +89,30 @@ ALTER TABLE `$table`
 SQL;
 
     \$db->query(\$sql);
+*/
 };
 
 // Down
 \$down = function(\$db) {
+    \$sql = \$db->alterTableRename('$table', [
+        'new_col_name' => 'old_col_name',
+    ]);
+    \$db->query(\$sql);
+
+
+    \$sql = \$db->alterTableModify('$table', [
+        'post' => 'string',
+    ]);
+    \$db->query(\$sql);
+
+
+    \$sql = \$db->alterTableDrop('$table', [
+        'user_id',
+        'name',
+    ]);
+    \$db->query(\$sql);
+
+/*
     \$sql = <<<'SQL'
 ALTER TABLE `$table` RENAME COLUMN new_col_name TO old_col_name;
 ALTER TABLE `$table`
@@ -73,6 +122,7 @@ ALTER TABLE `$table`
 SQL;
 
     \$db->query(\$sql);
+ */
 };
 
 PHP;

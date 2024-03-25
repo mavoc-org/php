@@ -3,6 +3,11 @@
 namespace app\controllers;
 
 class MainController {
+    public function about($req, $res) {
+        //$res->view('main/home');
+        return [];
+    }
+
     public function home($req, $res) {
         //$res->view('main/home');
         return [];
@@ -26,5 +31,10 @@ class MainController {
     public function terms($req, $res) {
         //$res->view('main/terms', ['title' => 'Terms of Use']);
         return ['title' => 'Terms of Use'];
+    }
+
+    public function test($req, $res) {
+        $title = 'Test';
+        return compact('title');
     }
 }

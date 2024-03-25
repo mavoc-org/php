@@ -4,14 +4,16 @@
         <?php $res->partial('head'); ?>
     </head>
     <body class="<?php $res->pathClass(); ?>">
-        <div id="app">
+        <?php $res->partial('view_app_before'); ?>
+        <div id="app" class="columns_2">
             <?php $res->partial('header'); ?>
+            <?php $res->partial('sidebar_account'); ?> 
             <main>
                 <div class="page">
                     <h2>Account</h2>
 
+                    <?php $res->html->messages(); ?>
                     <?php if(ao()->env('APP_LOGIN_TYPE') == 'db'): ?>
-                        <?php $res->html->messages(); ?>
                         <form method="POST">
                             <?php $res->html->text('Username', 'username', '', '', 'disabled'); ?>
 
@@ -34,11 +36,11 @@
                             <?php $res->html->text('Email', '', '', '', 'disabled'); ?>
                         </form>
                     <?php endif; ?>
-
                 </div>
             </main>
             <?php $res->partial('footer'); ?>
         </div>
+        <?php $res->partial('view_app_after'); ?>
 		<?php $res->partial('foot'); ?>
     </body>
 </html>

@@ -10,7 +10,7 @@ class ContactController {
         //$res->view('contact/contact');
     }
 
-    public function contactPost($req, $res) {
+    public function contactSubmit($req, $res) {
         $val = $req->val($req->data, [
             'name' => ['required'],
             'email' => ['required', 'email'],

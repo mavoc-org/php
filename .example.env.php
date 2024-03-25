@@ -28,7 +28,7 @@ return [
     'APP_DESCRIPTION' => 'A simple app.', 
 
 	// The 'list' option is only used for simple, non-database sites.
-    'APP_LOGIN_TYPE' => 'db', // Options: none, list, db (or options from other plugins)
+    'APP_LOGIN_TYPE' => 'list', // Options: none, list, db (or options from other plugins)
     // If 'list' is chosen, these users will be available for login. The number is the user_id.
     'APP_LOGIN_USERS' => [
         1 => ['email' => 'user@example.com', 'password' => 'example'],
@@ -58,11 +58,18 @@ return [
     'AO_BASE_DIR' => __DIR__,
     'AO_DB_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'db',
     'AO_PLUGIN_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'plugins',
+    'AO_PUBLIC_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'public',
     'AO_SETTINGS_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'settings',
-    'AO_STORAGE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'storage',
+    'AO_STORAGE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . '.storage',
     'AO_MAVOC_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc',
     'AO_MAVOC_CONSOLE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc' . DIRECTORY_SEPARATOR . 'console',
     'AO_MAVOC_CORE_DIR' => __DIR__ . DIRECTORY_SEPARATOR . 'mavoc' . DIRECTORY_SEPARATOR . 'core',
+
+    // Set the permissions (used in script automations like: php ao process)
+    'AO_CHOWN' => '', // Your username
+    'AO_CHGRP' => '', // Your group (like www-data)
+    'AO_CHMOD_FILE' => 0664,
+    'AO_CHMOD_DIR' => 0775,
 
     'AO_OUTPUT_HOOKS' => false,
 
@@ -75,6 +82,24 @@ return [
     'DB_USER' => 'example_com',
     'DB_PASS' => '',
     'DB_CHARSET' => 'utf8mb4',
+
+    // API Docs
+    'API_DOC_SITE' => 'https://sandbox.example.com',
+    'API_DOC_CLIENT_SITE' => 'https://client.example.com',
+    'API_DOC_USERNAME' => 'demo',
+    'API_DOC_KEY' => 'SITE_api_sand_01234demo56789_key',
+    'API_DOC_PREFIX' => 'SITE_api_sand_',
+    'API_DOC_SUFFIX' => '_key',
+    
+    // API
+    'API_PREFIX' => 'SITE_api_dev_', // _dev_, _sand_, _prod_
+    'API_SUFFIX' => '_key',
+    'API_TYPE' => 'server', // client or server
+    // Below items only needed if client.
+    'API_BASE' => 'https://example.com', // https://example.com
+    'API_VERSION' => '/api/v0', // /api/v0
+    'API_REMOTE_USERNAME' => 'demo',
+    'API_REMOTE_KEY' => 'SITE_api_example_key',
 
     // Email
     'EMAIL_ADMIN' => 'admin@example.com',
@@ -90,5 +115,10 @@ return [
     'SERVICE_CLIENT_ID' => 'api_id',
     'SERVICE_CLIENT_SECRET' => 'api_secret',
     'SERVICE_USER_AGENT' => 'some_services_require_this_item', 
+
+    // Rsync
+    'RSYNC_SERVERS' => [
+        'prod' => 'user@example.com:/var/www/example.com',
+    ],
 ];
 

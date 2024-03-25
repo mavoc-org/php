@@ -4,6 +4,7 @@ namespace mavoc\core;
 
 class Request {
     public $ajax = false;
+    public $type = 'web';
     public $canonical = '';
     public $data = [];
     public $ip = ''; 

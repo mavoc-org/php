@@ -4,23 +4,26 @@
         <?php $res->partial('head'); ?>
     </head>
     <body class="<?php $res->pathClass(); ?>">
-        <div id="app">
+        <?php $res->partial('view_app_before'); ?>
+        <div id="app" class="columns_2">
             <?php $res->partial('header'); ?>
+            <?php $res->partial('sidebar_account'); ?> 
             <main>
                 <div class="page">
-                    <h1>Add Username</h1>
-                    <p>Please choose a username. The username will be used for your account:<br>
-                    <?php esc(ao()->env('APP_SITE')) ?>/<strong>Your_Username_Here</strong></p>
+                    <h2>Create API Key</h2>
 
                     <?php $res->html->messages(); ?>
-                    <form action="/username/create" method="POST">
-                        <?php $res->html->text('Username', 'name'); ?>
-                        <?php $res->html->submit('Add', 'button button_invert'); ?>
+                    <form method="POST">
+                        <?php $res->html->text('Name', 'name'); ?>
+
+                        <?php $res->html->submit('Create'); ?>
                     </form>
                 </div>
             </main>
             <?php $res->partial('footer'); ?>
         </div>
+        <?php $res->partial('view_app_after'); ?>
 		<?php $res->partial('foot'); ?>
     </body>
 </html>
+

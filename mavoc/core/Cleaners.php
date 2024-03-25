@@ -21,8 +21,8 @@ class Cleaners {
             if($default !== null) {
                 return $default;
             } else {
-            $value = [];
-        }
+                $value = [];
+            }
         }
 
         return $value;
@@ -50,8 +50,8 @@ class Cleaners {
             if($default !== null) {
                 return $default;
             } else {
-            return 0;
-        }
+                return 0;
+            }
         }
 
         return $value;
@@ -62,12 +62,25 @@ class Cleaners {
             if($default !== null) {
                 return $default;
             } else {
-            $value = 0;
-        }
+                $value = 0;
+            }
         }
         $output = $value * 100;
         return $output;
     }
+
+    public function integer($value, $default = null) {
+        // If it is not an integer, set it to 0.
+        if(filter_var($value, FILTER_VALIDATE_INT) === false) {
+            if($default !== null) {
+                return $default;
+            } else {
+                return 0;
+            }
+        }
+
+        return $value;
+    }   
 
     public function lowercase($value) {
         $output = strtolower($value);

@@ -5,6 +5,100 @@ namespace mavoc\core\db;
 use PDO;
 
 class MySQL {
+    public static function alterTableAdd($table, $args) {
+        $sql = '';
+
+        $field_count = 0;
+
+        $sql = '';
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        $sql .= 'ALTER TABLE `' . $table . '` ';
+        foreach($args as $key => $arg) {
+            if(is_string($arg)) {
+                if($field_count) {
+                    $sql .= ', ';
+                }
+                $sql .= 'ADD COLUMN ' . self::createType($key, $arg);
+
+                $field_count++;
+            } elseif(is_array($arg) && isset($arg['type'])) {
+                if($field_count) {
+                    $sql .= ', ';
+                }
+                $sql .= 'ADD COLUMN ' . self::createType($key, $arg['type'], $arg);
+                if(isset($arg['after'])) {
+                    $sql .= ' AFTER `' . $arg['after'] . '`';
+                }
+
+                $field_count++;
+            }
+        }
+
+        return $sql;
+    }
+
+    public static function alterTableDrop($table, $args) {
+        $sql = '';
+
+        $field_count = 0;
+
+        $sql = 'ALTER TABLE `' . $table . '` ';
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        foreach($args as $i => $column) {
+            if($field_count) {
+                $sql .= ', ';
+            }
+            $sql .= 'DROP COLUMN `' . $column . '`';
+
+            $field_count++;
+        }
+
+        return $sql;
+    }
+
+    public static function alterTableModify($table, $args) {
+        $sql = '';
+
+        $field_count = 0;
+
+        $sql = '';
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        $sql .= 'ALTER TABLE `' . $table . '` ';
+        foreach($args as $key => $arg) {
+            if(is_string($arg)) {
+                if($field_count) {
+                    $sql .= ', ';
+                }
+                $sql .= 'MODIFY COLUMN ' . self::createType($key, $arg);
+
+                $field_count++;
+            } elseif(is_array($arg) && isset($arg['type'])) {
+                if($field_count) {
+                    $sql .= ', ';
+                }
+                $sql .= 'MODIFY COLUMN ' . self::createType($key, $arg['type'], $arg);
+                if(isset($arg['after'])) {
+                    $sql .= ' AFTER `' . $arg['after'] . '`';
+                }
+
+                $field_count++;
+            }
+        }
+
+        return $sql;
+    }
+
+    public static function alterTableRename($table, $args) {
+        $sql = '';
+
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        foreach($args as $old => $new) {
+            $sql .= 'ALTER TABLE `' . $table . '` RENAME COLUMN `' . $old . '` TO `' . $new . '`; ';
+        }
+
+        return $sql;
+    }
+
     public static function createTable($table, $args) {
         $sql = '';
 
@@ -19,12 +113,13 @@ class MySQL {
                 if($field_count) {
                     $sql .= ', ';
                 }
-                $sql .= self::createType($key, $arg);
 
                 // Save the first $primary_key
                 if($arg == 'id' && !$primary_key) {
-                    $sql .= ' AUTO_INCREMENT ';
+                    $sql .= self::createType($key, $arg, ['primary' => true]);
                     $primary_key = $key;
+                } else {
+                    $sql .= self::createType($key, $arg);
                 }
 
                 $field_count++;
@@ -32,12 +127,16 @@ class MySQL {
                 if($field_count) {
                     $sql .= ', ';
                 }
-                $sql .= self::createType($key, $arg['type'], $arg);
 
                 // Save the first $primary_key
                 if($arg == 'id' && !$primary_key) {
-                    $sql .= ' AUTO_INCREMENT ';
+                    if(!isset($arg['primary'])) {
+                        $arg['primary'] = true;
+                    }
+                    $sql .= self::createType($key, $arg['type'], $arg);
                     $primary_key = $key;
+                } else {
+                    $sql .= self::createType($key, $arg['type'], $arg);
                 }
 
                 $field_count++;
@@ -57,6 +156,15 @@ class MySQL {
 
         if($type == 'id') {
             $sql .= '`' . $key . '` bigint unsigned NOT NULL ';
+            if(isset($extras['primary'])) {
+                $sql .= ' AUTO_INCREMENT ';
+            } else {
+                if(isset($extras['default'])) {
+                    $sql .= "DEFAULT '" . $extras['default'] . "' ";
+                } else {
+                    $sql .= "DEFAULT '" . 0 . "' ";
+                }
+            }
         } elseif($type == 'string') {
             $sql .= '`' . $key . '` varchar(255) ';
         } elseif($type == 'text') {
@@ -64,14 +172,14 @@ class MySQL {
         } elseif($type == 'boolean') {
             $sql .= '`' . $key . '` tinyint(1) NOT NULL ';
             if(isset($extras['default'])) {
-                $sql .= "DEFAULT '" . $extras['default'] . " '";
+                $sql .= "DEFAULT '" . $extras['default'] . "' ";
             } else {
-                $sql .= "DEFAULT '" . 0 . " '";
+                $sql .= "DEFAULT '" . 0 . "' ";
             }
         } elseif($type == 'datetime') {
             $sql .= '`' . $key . '` datetime ';
             if(isset($extras['default'])) {
-                $sql .= "DEFAULT '" . $extras['default'] . " '";
+                $sql .= "DEFAULT '" . $extras['default'] . "' ";
             } else {
                 $sql .= "DEFAULT NULL ";
             }
@@ -80,9 +188,9 @@ class MySQL {
         } elseif($type == 'integer') {
             $sql .= '`' . $key . '` int NOT NULL ';
             if(isset($extras['default'])) {
-                $sql .= "DEFAULT '" . $extras['default'] . " '";
+                $sql .= "DEFAULT '" . $extras['default'] . "' ";
             } else {
-                $sql .= "DEFAULT '" . 0 . " '";
+                $sql .= "DEFAULT '" . 0 . "' ";
             }
         }
 
@@ -108,6 +216,15 @@ class MySQL {
             $sql .= '`' . $key . '`' . ' = ?';
             $args[] = $value;
         }
+
+        return $sql;
+    }
+
+    public static function truncateTable($table) {
+        $sql = '';
+
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        $sql = 'TRUNCATE `' . $table . '`';
 
         return $sql;
     }

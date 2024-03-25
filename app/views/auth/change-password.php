@@ -4,10 +4,12 @@
         <?php $res->partial('head'); ?>
     </head>
     <body class="<?php $res->pathClass(); ?>">
-        <div id="app">
+        <?php $res->partial('view_app_before'); ?>
+        <div id="app" class="columns_2">
             <?php $res->partial('header'); ?>
+            <?php $res->partial('sidebar_account'); ?> 
             <main>
-                <section class="box">
+                <div class="page">
                     <h2><?php esc($title); ?></h2>
 
                     <?php if(ao()->env('APP_LOGIN_TYPE') == 'db'): ?>
@@ -23,10 +25,11 @@
                         <p>The password cannot be changed on the current system.</p>
                     <?php endif; ?>
 
-                </section>
+                </div>
             </main>
             <?php $res->partial('footer'); ?>
         </div>
+        <?php $res->partial('view_app_after'); ?>
 		<?php $res->partial('foot'); ?>
     </body>
 </html>

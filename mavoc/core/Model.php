@@ -377,7 +377,7 @@ class Model {
 
         $class = get_called_class();
         $quote = ao()->db->quote;
-		$table = self::setTable($class);
+        $table = self::setTable($class);
         $limit = self::setLimit($return_type, $table);
         $page = self::setPage($return_type, $table);
         $offset = self::setOffset($return_type, $table);
@@ -472,8 +472,8 @@ class Model {
                     } else {
                         $output['page_next'] = $output['total_pages'];
                     }
-                    $output['page_current'] = $page;
-                    $output['current_page'] = $page;
+                    $output['page_current'] = (int) $page;
+                    $output['current_page'] = (int) $page;
                     $output['current_result'] = (($page - 1) * $limit) + 1;
                     $output['current_result_first'] = (($page - 1) * $limit) + 1;
                     if($page < $output['total_pages']) {
@@ -511,7 +511,7 @@ class Model {
     // TODO: Should there be a non-static version of this method?
     public static function delete($id) {
         $class = get_called_class();
-		$table = self::setTable($class);
+        $table = self::setTable($class);
         if($table) {
             if(is_array($id)) {
                 $first = true;
@@ -537,7 +537,7 @@ class Model {
     // TODO: Need to cache the results so that dynamic values aren't constantly being created.
     public static function find($id, $return_type = 'default') {
         $class = get_called_class();
-		$table = self::setTable($class);
+        $table = self::setTable($class);
         $item = null;
         $output = null;
         if($table) {
@@ -579,8 +579,11 @@ class Model {
         $this->all['id'] = ao()->db->lastInsertId();
         $this->id = $this->all['id'];
 
-        // Reload the all
-        $this->all = self::find($this->id)->all;
+        // Reload the all, raw, and data
+        $item = self::find($this->id);
+        $this->all = $item->all;
+        $this->raw = $item->raw;
+        $this->data = $item->data;
     }
 
     public static function query() {
@@ -613,6 +616,17 @@ class Model {
         return $output;
     }
 
+    // Reload if an id has been set.
+    public function reload() {
+        if($this->id) {
+            // Reload the all, raw, and data
+            $item = self::find($this->id);
+            $this->all = $item->all;
+            $this->raw = $item->raw;
+            $this->data = $item->data;
+        }
+    }
+
     public function save() {
         $this->data = ao()->hook('ao_model_save_data', $this->data);
         $this->data = ao()->hook('ao_model_save_' . $this->tbl . '_data', $this->data);
@@ -636,10 +650,10 @@ class Model {
                 unset($this->data['updated_at']);
                 $this->update($this->data);
             } else {
-                $this->insert($this->data);
+                $this->insert($this->all);
             }
         } else {
-            $this->insert($this->data);
+            $this->insert($this->all);
         }
     }
 
@@ -781,8 +795,11 @@ class Model {
 
         ao()->db->update($this->tbl, $this->id, $input);
 
-        // Reload the data
-        $this->all = self::find($this->id)->all;
+        // Reload the all, raw, and data
+        $item = self::find($this->id);
+        $this->all = $item->all;
+        $this->raw = $item->raw;
+        $this->data = $item->data;
     }
 
     public static function updateWhere($input = [], $key = '', $value = '') {
@@ -816,6 +833,10 @@ class Model {
         }
         if($key && $value) {
             $sql .= ' WHERE ' . $quote . $key . $quote . ' = ?';
+            // Prep data (like converting DateTime to string
+            if($value instanceof DateTime) {
+                $value = $value->format('Y-m-d H:i:s');
+            }
             $args[] = $value;
         } elseif(is_array($key)) {
             $first = true;
@@ -828,6 +849,10 @@ class Model {
                 }
                 if(is_array($v) && isset($v[0]) && isset($v[1]) && in_array($v[0], self::$compare)) {
                     $sql .= ' ' . $quote . $k . $quote . ' ' . $v[0] . ' ?';
+                    // Prep data (like converting DateTime to string
+                    if($v[1] instanceof DateTime) {
+                        $v[1] = $v[1]->format('Y-m-d H:i:s');
+                    }
                     $args[] = $v[1];
                 } elseif(is_array($v) && isset($v[0]) && isset($v[0][0]) && in_array($v[0][0], self::$compare)) {
                     foreach($v as $i => $val) {
@@ -836,11 +861,19 @@ class Model {
                                 $sql .= ' AND';
                             }
                             $sql .= ' ' . $quote . $k . $quote . ' ' . $val[0] . ' ?';
+                            // Prep data (like converting DateTime to string
+                            if($v[1] instanceof DateTime) {
+                                $v[1] = $v[1]->format('Y-m-d H:i:s');
+                            }
                             $args[] = $val[1];
                         }
                     }
                 } else {
                     $sql .= ' ' . $quote . $k . $quote . ' = ?';
+                    // Prep data (like converting DateTime to string
+                    if($v instanceof DateTime) {
+                        $v = $v->format('Y-m-d H:i:s');
+                    }
                     $args[] = $v;
                 }
             }
@@ -885,6 +918,10 @@ class Model {
                     }
                     if(is_array($v) && isset($v[0]) && isset($v[1]) && in_array($v[0], self::$compare)) {
                         $sql .= ' ' . $quote . $k . $quote . ' ' . $v[0] . ' ?';
+                        // Prep data (like converting DateTime to string
+                        if($v[1] instanceof DateTime) {
+                            $v[1] = $v[1]->format('Y-m-d H:i:s');
+                        }
                         $values[] = $v[1];
                     } elseif(is_array($v) && isset($v[0]) && isset($v[0][0]) && in_array($v[0][0], self::$compare)) {
                         foreach($v as $i => $val) {
@@ -893,11 +930,19 @@ class Model {
                                     $sql .= ' AND';
                                 }
                                 $sql .= ' ' . $quote . $k . $quote . ' ' . $val[0] . ' ?';
+                                // Prep data (like converting DateTime to string
+                                if($v[1] instanceof DateTime) {
+                                    $v[1] = $v[1]->format('Y-m-d H:i:s');
+                                }
                                 $values[] = $val[1];
                             }
                         }
                     } else {
                         $sql .= ' ' . $quote . $k . $quote . ' = ?';
+                        // Prep data (like converting DateTime to string
+                        if($v instanceof DateTime) {
+                            $v = $v->format('Y-m-d H:i:s');
+                        }
                         $values[] = $v;
                     }
                 }

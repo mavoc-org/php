@@ -7,6 +7,7 @@ if(is_file('vendor/autoload.php')) {
 }
 
 use app\App;
+use app\Local;
 
 //use mavoc\console\Args;
 use mavoc\console\In;
@@ -72,6 +73,7 @@ class Main {
     public $envs = [];
     public $in;
     public $hooks;
+    public $local;
     public $out;
     public $plugins;
     public $router;
@@ -201,6 +203,18 @@ class Main {
             $func = [$this->app, 'init'];
             $func = $this->hook('ao_app_init', $func);
             call_user_func($func);
+        }
+
+        $local_file = ao()->env('AO_BASE_DIR') . DIRECTORY_SEPARATOR . '.Local.php';
+        $local_file = $this->hook('ao_local_file', $local_file);
+        if(is_file($local_file)) {
+            require_once $local_file;
+            $this->local = new Local();
+            $this->local = $this->hook('ao_local', $this->local);
+            $func = [$this->local, 'init'];
+            $func = $this->hook('ao_local_init', $func);
+            call_user_func($func);
+            $this->local = $this->hook('ao_local_initialized', $this->local);
         }
 
         $this->hook('ao_console_ready');

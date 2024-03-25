@@ -2,10 +2,14 @@
 
 // Up
 $up = function($db) {
-    $sql = $db->createTable('restrictions', [
+    $sql = $db->createTable('api_keys', [
         'id' => 'id',
         'user_id' => 'id',
-        'premium_level' => ['type' => 'integer', 'default' => 0],
+        'name' => 'string',
+        'api_key_hash' => 'string',
+        'prefix' => 'string',
+        'suffix' => 'string',
+        'last4' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ]);
@@ -15,6 +19,6 @@ $up = function($db) {
 
 // Down
 $down = function($db) {
-    $sql = $db->dropTable('restrictions');
+    $sql = $db->dropTable('api_keys');
     $db->query($sql);
 };

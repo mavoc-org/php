@@ -16,6 +16,7 @@ class REST {
     public $res_headers = [];
     public $api_key = '';
 
+    // $auth is expecting a format like: username:password
     public function __construct($headers = [], $auth = '', $json = true) {
         // Not set up yet - will be used to simulate app calls without touching a network.
         $internal = new InternalREST();
@@ -174,8 +175,16 @@ class REST {
         return $output;
     }
 
-    public function post($url, $data = [], $headers = [], $as_array = false) {
+    public function post($url, $data = [], $headers = [], $returns = ['object']) {
         $final_headers = array_merge($this->headers, $headers);
+
+        // If it is a string, turn into an array.
+        //   If comma, delimited, break apart.
+        // Possible values: raw; object; array; headers; headers,object; headers,array
+        if(is_string($returns)) {
+            $parts = explode(',', $returns);
+            $returns = $parts;
+        }
 
         //echo '<pre>'; print_r($headers); echo '</pre>';
         //echo '<pre>'; print_r($final_headers); echo '</pre>'; die;
@@ -195,9 +204,21 @@ class REST {
         $response = curl_exec($ch);
         curl_close($ch);
 
-        if($this->json) {
-            $json = json_decode($response, $as_array);
-            return $json;
+        // TODO: Probably need to add some error checking for json_decode.
+        if(in_array('object', $returns)) {
+            $body = json_decode($response);
+            if(in_array('headers', $returns)) {
+                return [$this->res_headers, $body];
+            } else {
+                return $body;
+            }
+        } elseif(in_array('array', $returns)) {
+            $body = json_decode($response, true);
+            if(in_array('headers', $returns)) {
+                return [$this->res_headers, $body];
+            } else {
+                return $body;
+            }
         } else {
             return $response;
         }

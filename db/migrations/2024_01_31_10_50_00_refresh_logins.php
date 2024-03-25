@@ -2,14 +2,13 @@
 
 // Up
 $up = function($db) {
-    $sql = $db->createTable('subscriptions', [
+    $sql = $db->createTable('refresh_logins', [
         'id' => 'id',
         'user_id' => 'id',
-        'base_plan' => 'string',
-        'status' => 'string',
-        'expires_at' => 'datetime',
+        'refresh_hash' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'expired_at' => 'datetime',
     ]);
 
     $db->query($sql);
@@ -17,6 +16,6 @@ $up = function($db) {
 
 // Down
 $down = function($db) {
-    $sql = $db->dropTable('subscriptions');
+    $sql = $db->dropTable('refresh_logins');
     $db->query($sql);
 };

@@ -21,12 +21,13 @@ class SettingsController {
     }
 
     public function update($req, $res) {
+        $timezones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
         $data = $req->val('data', [
-            'timezone' => ['required'],
+            'timezone' => ['required', ['in' => $timezones]],
         ]);
 
         Setting::set($req->user_id, $data);
 
-        $res->success('Items updated successfully.', '/settings');
+        $res->success('Settings updated successfully.', '/settings');
     }
 }

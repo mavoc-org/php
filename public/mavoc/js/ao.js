@@ -85,9 +85,13 @@ window.ao = {};
         var request = new XMLHttpRequest();
         request.open('POST', url, true);
 
-        request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        // FormData appears to set the proper request header:
+        // https://stackoverflow.com/questions/9395911/send-a-file-as-multipart-through-xmlhttprequest
+        if(!(data instanceof FormData)) {
+            data = new URLSearchParams(data).toString();
+            request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        }
         request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        data = new URLSearchParams(data).toString();
 
         request.onload = function() {
             if (request.status >= 200 && request.status < 400) {

@@ -2,12 +2,13 @@
 
 namespace app\controllers;
 
-//use app\models\Example;
+use app\models\User;
+
+use app\services\APIService;
 
 class APIMetricsController {
-    public function examples($req, $res) {
-        //$count = Example::count('status', 'published');
-        $count = 0;
-        return compact('count');
+    public function users($req, $res) {
+        $count = User::count();
+        return APIService::success([], [], compact('count'));
     }
 }

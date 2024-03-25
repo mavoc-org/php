@@ -6,40 +6,11 @@ use app\models\User;
 use app\models\Username;
 
 class AuthController {
-    public function account($req, $res) {
-       $usernames = Username::where('user_id', $req->user->data['id']);
-      
-        // First time logging in, make sure they have a username
-        if(count($usernames) == 0) {    
-            $res->redirect('/username/add');
-        }
-
-        $res->fields['username'] = $usernames[0]->data['name'];
-        $res->fields['name'] = $req->user->data['name'];
-        $res->fields['email'] = $req->user->all['email'];
-
-        return ['title' => 'Account'];
-    }
-
-    public function accountPost($req, $res) {
-        if(ao()->env('APP_LOGIN_TYPE') != 'db') {
-            $res->error('There was a problem processing the requested action.');
-        }
-        $val = $req->val('data', [
-            'name' => ['required'],
-            'email' => ['required', 'email', ['dbUnique' => ['users', 'id', $req->user_id]]],
-        ]);
-
-        $req->user->update($val);
-
-        $res->success('Account has been updated.');
-    }
-
     public function changePassword($req, $res) {
         return ['title' => 'Change Password'];
     }
 
-    public function changePasswordPost($req, $res) {
+    public function changePasswordSave($req, $res) {
         if(ao()->env('APP_LOGIN_TYPE') != 'db') {
             $res->error('There was a problem processing the requested action.');
         }
@@ -57,7 +28,7 @@ class AuthController {
         return ['title' => 'Forgot Password'];
     }
 
-    public function forgotPasswordPost($req, $res) {
+    public function forgotPasswordSubmit($req, $res) {
         if(ao()->env('APP_LOGIN_TYPE') != 'db') {
             $res->error('There was a problem processing the requested action.');
         }
@@ -75,7 +46,7 @@ class AuthController {
         return ['title' => 'Login'];
     }
 
-    public function loginPost($req, $res) {
+    public function loginSubmit($req, $res) {
         $val = $req->val('data', [
             'login_email' => ['required', 'email'],
             'login_password' => ['required', 'password'],
@@ -89,7 +60,13 @@ class AuthController {
             $res->error('The email and/or password did not match a user in the system.');
         }
 
-        $res->redirect('/account');
+        if(isset($req->session->data['login_redirect']) && $req->session->data['login_redirect']) {
+            $redirect = $req->session->data['login_redirect'];
+            unset($req->session->data['login_redirect']);
+            $res->redirect($redirect);
+        } else {
+            $res->redirect(ao()->env('APP_PRIVATE_HOME'));
+        }   
     }
 
     public function logout($req, $res) {
@@ -111,7 +88,7 @@ class AuthController {
         $res->redirect($redirect);  
     }
 
-    public function registerPost($req, $res) {
+    public function registerSubmit($req, $res) {
         $val = $req->val('data', [
             'name' => ['required'],
             'email' => ['required', 'email', ['dbUnique' => 'users']],
@@ -136,7 +113,7 @@ class AuthController {
         return compact('title', 'token', 'user_id');
     }
 
-    public function resetPasswordPost($req, $res) {
+    public function resetPasswordSubmit($req, $res) {
         if(ao()->env('APP_LOGIN_TYPE') != 'db') {
             $res->error('There was a problem processing the requested action.');
         }
