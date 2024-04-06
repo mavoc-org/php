@@ -74,6 +74,8 @@ class Mavoc {
     public $html;
     public $local;
     public $plugins;
+    public $request;
+    public $response;
     public $router;
     public $session;
 

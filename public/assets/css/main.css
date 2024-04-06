@@ -1,1 +1,19 @@
+.page_pricing h1 + ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    list-style-type: none;
+}
 
+.page_pricing h1 + ul > li {
+    margin: 0;
+    padding: 1rem;
+    width: 100%;
+}
+
+.page_pricing h1 + ul ul {
+    list-style-type: disc;
+    margin: 0;
+    padding: 1.5rem;
+}

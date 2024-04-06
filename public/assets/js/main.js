@@ -22,7 +22,7 @@
     }
 
     function init() {
-        ao.listen('click', '.close', close, reset);
+        //ao.listen('click', '.close', close, reset);
     }
 
     init();

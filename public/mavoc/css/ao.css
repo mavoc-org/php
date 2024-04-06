@@ -70,6 +70,27 @@ img {
 #app.columns_2 > footer {
     grid-column: 1 / 6;
 }
+
+#app.columns_3 {
+    display: grid;
+    grid-template-columns: auto 280px 600px 288px auto;
+    grid-column-gap: 16px;
+}
+#app.columns_3 > header {
+    grid-column: 1 / 6;
+}
+#app.columns_3 > #sidebar_left {
+    grid-column: 2 / 3;
+}
+#app.columns_3 > main {
+    grid-column: 3 / 4;
+}
+#app.columns_3 > #sidebar_right {
+    grid-column: 4 / 5;
+}
+#app.columns_3 > footer {
+    grid-column: 1 / 6;
+}
 /* EOF Grid */
 
 /* BOF Sidebars */
@@ -110,6 +131,10 @@ main .page {
     box-shadow: 0 6px 14px 0 #0000001a;
     margin-top: 32px;
     margin-bottom: 32px;
+}
+
+nav {
+    position: relative;
 }
 
 a {
@@ -186,6 +211,9 @@ hr {
 
 
 /* BOF Navigation */
+header nav {
+    position: static;
+}
 #toggle_menu {
     position: absolute;
     margin: 0;
@@ -271,8 +299,34 @@ button:hover,
     opacity: 0.9;
 }
 
+.link {
+    position: relative;
+    background-color: transparent; 
+    color: inherit; 
+    border-width: 0; 
+    padding: 0; 
+    cursor: pointer;
+
+    display: inline-block;
+    padding: 0;
+    font-size: 1rem;
+    border-radius: 0;
+    font-weight: normal;
+    transition: none;
+
+    text-decoration: none;
+    line-height: normal;
+}
+.link:hover {
+    border-bottom: 1px solid currentColor;
+    background: transparent;
+    opacity: 1;
+}
+
 select {
     padding: 0.5rem;
+    max-width: 218px;
+    width: 100%;
 }
 
 textarea,
@@ -388,6 +442,88 @@ button.close:hover {
     margin-bottom: 0;
 }
 /* EOF Notices */
+
+/* BOF Inline Menu */
+.inline_menu > input {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    border: 0;
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
+.inline_menu > input + label {
+    position: relative;
+    padding: 0.5rem;
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+    line-height: normal;
+    display: inline-block;
+    background: url(/mavoc/images/tabler-icons/dots.svg) no-repeat;
+    width: 24px;
+    height: 24px;
+}
+.inline_menu > input + label + menu {
+    display: none;
+}
+.inline_menu > input:checked + label {
+    background: url(/mavoc/images/tabler-icons/x.svg) no-repeat;
+}
+.inline_menu > input:checked + label + menu {
+    display: block;
+    position: absolute;
+    top: 32px;
+    left: 0;
+    width: 100%;
+    min-width: 240px;
+    z-index: 1;
+    padding: 1rem;
+    padding-left: 50%;
+    background: #fff;
+    box-shadow: 0 6px 14px 0 #0000001a;
+}
+.inline_menu > input:checked + label + menu li {
+    display: block;
+    margin: 0 0 1rem 0;
+}
+.inline_menu > input:checked + label + menu li:last-child {
+    margin: 0;
+}
+.inline_menu form > div {
+    margin-bottom: 0;
+}
+.inline_menu input[type=submit],
+.inline_menu button {
+    position: relative;
+    background-color: transparent; 
+    color: inherit; 
+    border-width: 0; 
+    padding: 0; 
+    cursor: pointer;
+
+    display: inline-block;
+    padding: 0;
+    font-size: 1rem;
+    border-radius: 0;
+    font-weight: normal;
+    transition: none;
+
+    text-decoration: none;
+    line-height: normal;
+    border-bottom: 1px solid transparent;
+}
+.inline_menu input[type=submit]:hover,
+.inline_menu button:hover {
+    border-bottom: 1px solid currentColor;
+    background: transparent;
+    opacity: 1;
+}
+/* EOF Inline Menu */
+
 
 /* BOF: Login */
 .page_login main .page {

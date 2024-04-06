@@ -138,6 +138,24 @@ class User extends Model {
         ao()->session->logout();
     }
 
+    public function process($data) {
+        $data['settings'] = [];
+        if(isset($data['id'])) {
+            $settings = Setting::get($data['id']);
+            foreach($settings as $key => $value) {
+                $data['settings'][$key] = $value;
+            }
+        } else {
+            $data['settings']['expires_at'] = '2038-01-01 10:00:00';
+            $data['settings']['plan'] = 'default';
+            $data['settings']['premium_level'] = 100;
+            $data['settings']['status'] = 'active';
+            $data['settings'] = ao()->hook('app_user_settings_default', $data['settings']);
+        }
+
+        return $data;
+    }
+
     public static function resetPassword($user_id, $token, $new_password) {
         if(ao()->env('APP_LOGIN_TYPE') == 'db') {
             $user = User::find($user_id);
