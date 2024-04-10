@@ -34,6 +34,8 @@ class RefreshLogin extends Model {
         // Cookie config
         $path = '/';
         $domain = ao()->env('APP_HOST');
+        // PHP replaces "." with "_" in cookie names so we might as well do it upfront.
+        $_domain = underscorify($domain);
         $site = ao()->env('APP_SITE');
         if(preg_match('/^https.*/', $site)) {
             $secure = true;
@@ -43,8 +45,8 @@ class RefreshLogin extends Model {
         $httponly = true;
 
         // Save cookies
-        setcookie('refresh_token', $token, time() + $seconds, $path, $domain, $secure, $httponly);
-        setcookie('refresh_user_id', $args['user_id'], time() + $seconds, $path, $domain, $secure, $httponly);
+        setcookie($_domain . '_refresh_token', $token, time() + $seconds, $path, $domain, $secure, $httponly);
+        setcookie($_domain . '_refresh_user_id', $args['user_id'], time() + $seconds, $path, $domain, $secure, $httponly);
 
         return $item;
     }
@@ -53,6 +55,8 @@ class RefreshLogin extends Model {
         // Cookie config
         $path = '/';
         $domain = ao()->env('APP_HOST');
+        // PHP replaces "." with "_" in cookie names so we might as well do it upfront.
+        $_domain = underscorify($domain);
         $site = ao()->env('APP_SITE');
         if(preg_match('/^https.*/', $site)) {
             $secure = true;
@@ -61,17 +65,20 @@ class RefreshLogin extends Model {
         }
         $httponly = true;
 
-        setcookie('refresh_token', '', time() - 3600, $path, $domain, $secure, $httponly);
-        setcookie('refresh_user_id', '', time() - 3600, $path, $domain, $secure, $httponly);
+        setcookie($_domain . '_refresh_token', '', time() - 3600, $path, $domain, $secure, $httponly);
+        setcookie($_domain . '_refresh_user_id', '', time() - 3600, $path, $domain, $secure, $httponly);
 
         // Delete old refresh hashes
         ao()->db->query('DELETE FROM refresh_logins WHERE user_id = ?', ao()->session->user_id);
     }
 
     public static function refresh() {
-        if(isset($_COOKIE['refresh_user_id']) && isset($_COOKIE['refresh_token'])) {
-            $user_id = $_COOKIE['refresh_user_id'];
-            $password = $_COOKIE['refresh_token'];
+        $domain = ao()->env('APP_HOST');
+        // PHP replaces "." with "_" in cookie names so we might as well do it upfront.
+        $_domain = underscorify($domain);
+        if(isset($_COOKIE[$_domain . '_refresh_user_id']) && isset($_COOKIE[$_domain . '_refresh_token'])) {
+            $user_id = $_COOKIE[$_domain . '_refresh_user_id'];
+            $password = $_COOKIE[$_domain . '_refresh_token'];
 
             $args = [];
             $args['user_id'] = $user_id;

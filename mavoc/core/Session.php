@@ -67,7 +67,7 @@ class Session {
                 }
             }
 
-            if(!isset($_SESSION['user_id']) && $this->user_id == 0) {
+            if((!isset($_SESSION['user_id']) || $_SESSION['user_id'] == 0) && $this->user_id == 0) {
                 $refresh = RefreshLogin::refresh();
                 if(isset($refresh['user']) && isset($refresh['user_id'])) {
                     $this->user = $refresh['user'];
