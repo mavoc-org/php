@@ -68,10 +68,12 @@ class Session {
             }
 
             if((!isset($_SESSION['user_id']) || $_SESSION['user_id'] == 0) && $this->user_id == 0) {
-                $refresh = RefreshLogin::refresh();
-                if(isset($refresh['user']) && isset($refresh['user_id'])) {
-                    $this->user = $refresh['user'];
-                    $this->user_id = $refresh['user_id'];
+                if(ao()->env('DB_USE')) {
+                    $refresh = RefreshLogin::refresh();
+                    if(isset($refresh['user']) && isset($refresh['user_id'])) {
+                        $this->user = $refresh['user'];
+                        $this->user_id = $refresh['user_id'];
+                    }
                 }
             }
 
@@ -121,7 +123,9 @@ class Session {
     public function logout() {
         session_destroy();
 
-        RefreshLogin::destroy();
+        if(ao()->env('DB_USE')) {
+            RefreshLogin::destroy();
+        }
     }
 
     public function save() {

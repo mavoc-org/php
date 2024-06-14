@@ -90,4 +90,17 @@ class Cleaners {
         $output = strtoupper($value);
         return $output;
     }
+
+    public function urlClean($value, $default = null) {
+        // If it is not a valid URL, set it to ''.
+        if(filter_var($value, FILTER_VALIDATE_URL) === false) {
+            if($default !== null) {
+                return $default;
+            } else {
+                return '';
+            }
+        }
+
+        return $value;
+    }
 }

@@ -45,6 +45,10 @@ Route::get('change-password', ['AuthController', 'changePassword'], 'private');
 Route::post('change-password', ['AuthController', 'changePasswordSave'], 'private');
 Route::post('logout', ['AuthController', 'logout'], 'private');
 
+Route::get('changelog/add', ['ChangelogsController', 'add'], ['admin']);
+Route::post('changelog/add', ['ChangelogsController', 'create'], ['admin']);
+Route::get('changelog/edit/{id}', ['ChangelogsController', 'edit'], ['admin']);
+Route::post('changelog/edit/{id}', ['ChangelogsController', 'update'], ['admin']);
 
 // Public
 Route::get('forgot-password', ['AuthController', 'forgotPassword'], 'public');
@@ -54,5 +58,10 @@ Route::post('login', ['AuthController', 'loginSubmit'], 'public');
 Route::post('register', ['AuthController', 'registerSubmit'], 'public');
 Route::get('reset-password', ['AuthController', 'resetPassword'], 'public');
 Route::post('reset-password', ['AuthController', 'resetPasswordSubmit'], 'public');
+
+
+Route::get('/changelog', ['ChangelogsController', 'list']);
+Route::get('/changelog/rss', ['ChangelogsController', 'rss']);
+Route::get('/changelog/{id}', ['ChangelogsController', 'view']);
 
 

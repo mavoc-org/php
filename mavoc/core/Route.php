@@ -22,6 +22,13 @@ class Route {
             Route::$gets[$uri] = $method;
             Route::$types[$uri] = Route::$type;
 
+            if(is_array($restrict)) {
+                $groups = $restrict;
+                $restrict = 'private';
+            } else {
+                $groups = [];
+            }
+
             if($restrict) {
                 if(!isset(Route::$restrictions['GET'])) {
                     Route::$restrictions['GET'] = [];
@@ -29,7 +36,7 @@ class Route {
                 if(!isset(Route::$restrictions['GET'][$restrict])) {
                     Route::$restrictions['GET'][$restrict] = [];
                 }
-                Route::$restrictions['GET'][$restrict][$uri] = true;
+                Route::$restrictions['GET'][$restrict][$uri] = $groups;
             }
         }
     }
@@ -42,6 +49,13 @@ class Route {
             Route::$posts[$uri] = $method;
             Route::$types[$uri] = Route::$type;
 
+            if(is_array($restrict)) {
+                $groups = $restrict;
+                $restrict = 'private';
+            } else {
+                $groups = [];
+            }
+
             if($restrict) {
                 if(!isset(Route::$restrictions['POST'])) {
                     Route::$restrictions['POST'] = [];
@@ -49,7 +63,7 @@ class Route {
                 if(!isset(Route::$restrictions['POST'][$restrict])) {
                     Route::$restrictions['POST'][$restrict] = [];
                 }
-                Route::$restrictions['POST'][$restrict][$uri] = true;
+                Route::$restrictions['POST'][$restrict][$uri] = $groups;
             }
         }
     }

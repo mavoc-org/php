@@ -46,6 +46,9 @@ return [
 
     'APP_KEYS' => $keys, 
 
+    'APP_GROUP_ADMIN' => [],
+    'APP_GROUP_EDITOR' => [],
+
     // Mavoc
     'AO_MAINTENANCE' => false, // Set to true will show the maintenance page.
     'AO_MAINTENANCE_EXCLUDE' => ['256.256.0.1'], // Enter a valid IP address that should be able to skip the maintenance page.
@@ -75,7 +78,7 @@ return [
 
     // DB
     'DB_USE' => false,
-    'DB_INSTALL' => true, // This is used to run the migrations on the initial load. If you are using the command line, set this to false.
+    'DB_INSTALL' => false, // This is used to run the migrations on the initial load. If you are using the command line, set this to false.
     'DB_TYPE' => 'mysql',
     'DB_HOST' => 'localhost',
     'DB_NAME' => 'example_com',

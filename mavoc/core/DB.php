@@ -159,6 +159,32 @@ class DB {
         return $sql;
     }
 
+    public function delete($table, $input) {
+        // Make sure to include created_at and updated_at
+        if(in_array($this->type, ['mysql'])) {
+            $sql = MySQL::delete($table, $input);
+        } elseif(in_array($this->type, ['pgsql'])) {
+            $sql = PostgreSQL::delete($table, $input);
+        }
+
+        $args = [];
+        if(is_array($input)) {
+            foreach($input as $key => $value) {
+                // Prep data (like converting DateTime to string)
+                if($value instanceof DateTime) {
+                    $value = $value->format('Y-m-d H:i:s');
+                }
+
+                $args[] = $value;
+            }
+        } else {
+            $args[] = $input;
+        }
+
+        ao()->db->query($sql, $args);
+    }
+
+
     public function dropTable($table) {
         $sql = '';
 
@@ -241,6 +267,7 @@ class DB {
             $sql = PostgreSQL::insert($table, $input);
         }
 
+        $args = [];
         foreach($input as $key => $value) {
             // Prep data (like converting DateTime to string)
             if($value instanceof DateTime) {

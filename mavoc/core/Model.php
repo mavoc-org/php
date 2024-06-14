@@ -228,7 +228,7 @@ class Model {
         if($table) {
             if(is_array($key)) {
                 $first = true;
-                $sql = 'SELECT * FROM ' . $table . ' WHERE ';
+                $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE ';
                 foreach($key as $k => $v) {
                     if($first) {
                         $first = false;
@@ -258,7 +258,7 @@ class Model {
 
                 $raw = ao()->db->query($sql, $values);
             } else {
-                $sql = 'SELECT * FROM ' . $table . ' WHERE';
+                $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE';
                 if(is_array($value) && isset($value[0]) && isset($value[1]) && in_array($value[0], self::$compare)) {
                     $sql .= ' ' . $quote . $key . $quote . ' ' . $value[0] . ' ?';
                     $values[] = $value[1];
@@ -315,7 +315,7 @@ class Model {
                 }  
 
                 $first = true;
-                $sql = 'SELECT * FROM ' . $table . ' WHERE ';
+                $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE ';
                 $values = [];
                 foreach($key as $k => $v) {
                     if(!$first) {
@@ -340,9 +340,9 @@ class Model {
                 $raw = ao()->db->query($sql, $values);
             } else {
                 if(is_array($value) && count($value) == 2) {
-                    $raw = ao()->db->query('SELECT * FROM ' . $table . ' WHERE ' . $quote . $key . $quote . ' ' . $value[0] . ' ? LIMIT 1', $value[1]);
+                    $raw = ao()->db->query('SELECT * FROM ' . $quote . $table . $quote . ' WHERE ' . $quote . $key . $quote . ' ' . $value[0] . ' ? LIMIT 1', $value[1]);
                 } else {
-                    $raw = ao()->db->query('SELECT * FROM ' . $table . ' WHERE ' . $quote . $key . $quote . ' = ? LIMIT 1', $value);
+                    $raw = ao()->db->query('SELECT * FROM ' . $quote . $table . $quote . ' WHERE ' . $quote . $key . $quote . ' = ? LIMIT 1', $value);
                 }
             }
             if(count($raw)) {
@@ -405,35 +405,38 @@ class Model {
         if($table) {
             if(is_array($key)) {
                 $first = true;
-                $sql = 'SELECT COUNT(id) as total FROM ' . $table . ' WHERE ';
-                foreach($key as $k => $v) {
-                    if($first) {
-                        $first = false;
-                    } else {
-                        $sql .= ' AND';
-                    }
-                    if(is_array($v) && isset($v[0]) && isset($v[1]) && in_array($v[0], self::$compare)) {
-                        $sql .= ' ' . $quote . $k . $quote . ' ' . $v[0] . ' ?';
-                        $values[] = $v[1];
-                    } elseif(is_array($v) && isset($v[0]) && isset($v[0][0]) && in_array($v[0][0], self::$compare)) {
-                        foreach($v as $i => $val) {
-                            if(isset($val[0]) && in_array($val[0], self::$compare)) {
-                                if($i > 0) {
-                                    $sql .= ' AND';
-                                }
-                                $sql .= ' ' . $quote . $k . $quote . ' ' . $val[0] . ' ?';
-                                $values[] = $val[1];
-                            }
+                $sql = 'SELECT COUNT(id) as total FROM ' . $quote . $table . $quote . ' WHERE ';
+                if(count($key)) {
+                    $sql .= ' WHERE ';
+                    foreach($key as $k => $v) {
+                        if($first) {
+                            $first = false;
+                        } else {
+                            $sql .= ' AND';
                         }
-                    } else {
-                        $sql .= ' ' . $quote . $k . $quote . ' = ?';
-                        $values[] = $v;
+                        if(is_array($v) && isset($v[0]) && isset($v[1]) && in_array($v[0], self::$compare)) {
+                            $sql .= ' ' . $quote . $k . $quote . ' ' . $v[0] . ' ?';
+                            $values[] = $v[1];
+                        } elseif(is_array($v) && isset($v[0]) && isset($v[0][0]) && in_array($v[0][0], self::$compare)) {
+                            foreach($v as $i => $val) {
+                                if(isset($val[0]) && in_array($val[0], self::$compare)) {
+                                    if($i > 0) {
+                                        $sql .= ' AND';
+                                    }
+                                    $sql .= ' ' . $quote . $k . $quote . ' ' . $val[0] . ' ?';
+                                    $values[] = $val[1];
+                                }
+                            }
+                        } else {
+                            $sql .= ' ' . $quote . $k . $quote . ' = ?';
+                            $values[] = $v;
+                        }
                     }
                 }
 
                 $raw = ao()->db->query($sql, $values);
             } elseif($key) {
-                $sql = 'SELECT COUNT(id) as total FROM ' . $table . ' WHERE';
+                $sql = 'SELECT COUNT(id) as total FROM ' . $quote . $table . $quote . ' WHERE';
                 if(is_array($value) && isset($value[0]) && isset($value[1]) && in_array($value[0], self::$compare)) {
                     $sql .= ' ' . $quote . $key . $quote . ' ' . $value[0] . ' ?';
                     $values[] = $value[1];
@@ -511,11 +514,12 @@ class Model {
     // TODO: Should there be a non-static version of this method?
     public static function delete($id) {
         $class = get_called_class();
+        $quote = ao()->db->quote;
         $table = self::setTable($class);
         if($table) {
             if(is_array($id)) {
                 $first = true;
-                $sql = 'DELETE FROM ' . $table . ' WHERE ';
+                $sql = 'DELETE FROM ' . $quote . $table . $quote . ' WHERE ';
                 $values = [];
                 foreach($id as $k => $v) {
                     if($first) {
@@ -529,7 +533,7 @@ class Model {
                 }   
                 $raw = ao()->db->query($sql, $values);
             } else {
-                ao()->db->query('DELETE FROM ' . $table . ' WHERE id = ?', $id);
+                ao()->db->query('DELETE FROM ' . $quote . $table . $quote . ' WHERE id = ?', $id);
             }   
         } 
     }
@@ -537,11 +541,12 @@ class Model {
     // TODO: Need to cache the results so that dynamic values aren't constantly being created.
     public static function find($id, $return_type = 'default') {
         $class = get_called_class();
+        $quote = ao()->db->quote;
         $table = self::setTable($class);
         $item = null;
         $output = null;
         if($table) {
-            $raw = ao()->db->query('SELECT * FROM ' . $table . ' WHERE id = ? LIMIT 1', $id);
+            $raw = ao()->db->query('SELECT * FROM ' . $quote . $table . $quote . ' WHERE id = ? LIMIT 1', $id);
             if(count($raw)) {
                 if($return_type == 'all') {
                     $item = new $class($raw[0]);
@@ -909,7 +914,7 @@ class Model {
         if($table) {
             if(is_array($key)) {
                 $first = true;
-                $sql = 'SELECT * FROM ' . $table . ' WHERE ';
+                $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE ';
                 foreach($key as $k => $v) {
                     if($first) {
                         $first = false;
@@ -968,7 +973,7 @@ class Model {
 
                 $raw = ao()->db->query($sql, $values);
             } else {
-                $sql = 'SELECT * FROM ' . $table . ' WHERE';
+                $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE';
                 if(is_array($value) && isset($value[0]) && isset($value[1]) && in_array($value[0], self::$compare)) {
                     $sql .= ' ' . $quote . $key . $quote . ' ' . $value[0] . ' ?';
                     $values[] = $value[1];
@@ -1052,7 +1057,7 @@ class Model {
         $values = [];
 
         if($table && count($list)) {
-            $sql = 'SELECT * FROM ' . $table . ' WHERE ' . $quote . $key . $quote . ' IN (';
+            $sql = 'SELECT * FROM ' . $quote . $table . $quote . ' WHERE ' . $quote . $key . $quote . ' IN (';
             foreach($list as $item) {
                 $sql .= '?,';
                 $values[] = $item;

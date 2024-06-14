@@ -167,6 +167,11 @@ class MySQL {
             }
         } elseif($type == 'string') {
             $sql .= '`' . $key . '` varchar(255) ';
+            if(isset($extras['default'])) {
+                $sql .= "DEFAULT '" . $extras['default'] . "' ";
+            } else {
+                $sql .= "DEFAULT NULL ";
+            }
         } elseif($type == 'text') {
             $sql .= '`' . $key . '` longtext ';
         } elseif($type == 'boolean') {
@@ -197,6 +202,30 @@ class MySQL {
         return $sql;
     }
 
+    public static function delete($table, $input) {
+        $sql = '';
+
+        if(is_array($input)) {
+            $first = true;
+            $sql .= 'DELETE FROM `' . $table . '` WHERE ';
+            $values = [];
+            foreach($input as $k => $v) {
+                if($first) {
+                    $sql .= '`' . $k . '` = ?';
+                    $values[] = $v;
+                    $first = false;
+                } else {
+                    $sql .= ' AND ' . '`' . $k . '` = ?';
+                    $values[] = $v;
+                }   
+            }   
+        } else {
+            $sql .= 'DELETE FROM `' . $table . '` WHERE id = ?';
+        }   
+
+        return $sql;
+    }
+
     public function dropTable($table) {
         $sql = '';
 
@@ -207,7 +236,7 @@ class MySQL {
     }
 
     public static function insert($table, $input) {
-        $sql = 'INSERT INTO ' . $table . ' SET ';
+        $sql = 'INSERT INTO `' . $table . '` SET ';
         $args = [];
         foreach($input as $key => $value) {
             if(count($args) > 0) {

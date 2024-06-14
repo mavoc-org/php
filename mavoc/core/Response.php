@@ -139,6 +139,15 @@ class Response {
             $output .= implode('_', $parts);
         }
 
+        if($output) {
+            $output .= ' ';
+        }
+        if($this->req->user_id) {
+            $output .= 'logged_in';
+        } else {
+            $output .= 'logged_out';
+        }
+
         return $output;
     }
     public function pathClass() {

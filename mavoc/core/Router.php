@@ -151,8 +151,8 @@ class Router {
                     }
                     if($logged_in && isset($restrictions['private'][$route])) {
                         // This hook can be used to check if the user has the appropriate permission level.
-                        // $logged_in is the user_id
-                        ao()->hook('ao_router_logged_in_private', $logged_in, $req, $res);
+                        $user_id = $logged_in;
+                        ao()->hook('ao_router_logged_in_private', $user_id, $restrictions['private'][$route], $req, $res);
                     }
 
                     $method = ao()->hook('ao_router_route_method', $method, $req, $res, $route);
@@ -206,7 +206,7 @@ class Router {
                                 $found = true;
 
                                 // Dynamically pick the view file.
-                                if($vars || is_array($vars)) {
+                                if(is_object($vars) || is_array($vars)) {
                                     $view_dir = dashify(str_replace('Controller', '', $class_name));
                                     $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
                                     if(!$view_found) {
@@ -286,7 +286,7 @@ class Router {
                                     $found = true;
 
                                     // Dynamically pick the view file.
-                                    if($vars || is_array($vars)) {
+                                    if(is_object($vars) || is_array($vars)) {
                                         $view_dir = underscorify(str_replace('Controller', '', $class_name));
                                         $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
                                         if(!$view_found) {
@@ -358,7 +358,7 @@ class Router {
                                     $found = true;
 
                                     // Dynamically pick the view file.
-                                    if($vars || is_array($vars)) {
+                                    if(is_object($vars) || is_array($vars)) {
                                         $view_dir = underscorify(str_replace('Controller', '', $class_name));
                                         $view_found = $res->view($view_dir . '/' . dashify($method_name), $vars);
                                         if(!$view_found) {

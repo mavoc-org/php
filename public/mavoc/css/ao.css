@@ -242,6 +242,18 @@ header nav {
     padding: 12px 0 0 0;
 }
 
+#app > footer .logo {
+    vertical-align: text-bottom;
+    margin-right: 8px;
+}
+
+#app > footer h2 {
+    /*
+    color: var(--current-color);
+    */
+    margin-bottom: 0;
+}
+
 #app > footer > .box {
     display: flex;
     justify-content: space-between;
@@ -283,7 +295,7 @@ button,
     padding: 12px 24px;
     padding: 8px 24px;
     font-size: 1rem;
-    background: #118DF0;
+    background: var(--current-color);
     color: #ffffff;
     border-radius: 2px;
     font-weight: 500;
@@ -295,7 +307,7 @@ button,
 input[type=submit]:hover,
 button:hover,
 .button:hover {
-    background: #118DF0;
+    background: var(--current-color);
     opacity: 0.9;
 }
 
@@ -354,7 +366,7 @@ button.close {
     position: absolute;
     top: .5rem;
     right: .5rem;
-    background: #118DF0;
+    background: var(--current-color);
     padding: 4px 4px 0 4px;
     width: 30px;
     color: #ffffff;
@@ -583,6 +595,7 @@ clip-path: inset(50%);
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    z-index: 1000;
 }
 .overlay.show {
     display: flex;
@@ -687,6 +700,14 @@ button.process:after,
 
     #app > footer menu {
         display: block;
+    }
+
+    #app.columns_2 {
+        display: block;
+    }
+    #app.columns_2 > #sidebar_left {
+        margin: 0 auto;
+        max-width: 900px;
     }
 
     /* BOF Navigation */
