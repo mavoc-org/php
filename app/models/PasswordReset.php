@@ -6,4 +6,5 @@ use mavoc\core\Model;
 
 class PasswordReset extends Model {
     public static $table = 'password_resets';
+    public static $columns = null;
 }

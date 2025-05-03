@@ -16,11 +16,12 @@ class Model {
     public static $table = '';
     public static $order = [];
     public static $private = [];
+    public static $columns = null;
 
     public $tbl = '';
     public $clmns = [];
 
-    public static $compare = ['=', '<', '<=', '>', '>=', '!='];
+    public static $compare = ['=', '<', '<=', '>', '>=', '!=', 'LIKE'];
 
     public function __construct($args = []) {
         // TODO: Restrict this to only valid args.
@@ -43,6 +44,7 @@ class Model {
             foreach($columns as $column) {
                 $this->clmns[] = $column['COLUMN_NAME'];
             }
+            $class::$columns = $this->clmns;
         }
 
         if(
@@ -113,7 +115,7 @@ class Model {
         $utc = new DateTimeZone('UTC');
 
         foreach($all as $key => $value) {
-            if(is_string($value) && substr($key, -3) == '_at') {
+            if(is_string($value) && substr($key, -3) == '_at' && $value) {
                 $dt_utc = new DateTime($value, $utc);
                 $all[$key] = $dt_utc;
 
@@ -126,6 +128,9 @@ class Model {
                 } else {
                     $all[substr($key, 0, -3) . '_tz'] = $dt_utc;
                 }
+            } elseif(!($value instanceof DateTime) && substr($key, -3) == '_at') {
+                $all[$key] = blankDateTime();
+                $all[substr($key, 0, -3) . '_tz'] = blankDateTime();
             }
         }
 
@@ -395,7 +400,9 @@ class Model {
             $output['current_result'] = 0;
             $output['current_result_first'] = 0;
             $output['current_result_last'] = 0;
+            $output['per_page'] = 0;
             $output['url_next'] = $url_default;
+            $output['url_current'] = $url_default;
             $output['url_previous'] = $url_default;
         } else {
             $output = 0; 
@@ -405,7 +412,7 @@ class Model {
         if($table) {
             if(is_array($key)) {
                 $first = true;
-                $sql = 'SELECT COUNT(id) as total FROM ' . $quote . $table . $quote . ' WHERE ';
+                $sql = 'SELECT COUNT(id) as total FROM ' . $quote . $table . $quote;
                 if(count($key)) {
                     $sql .= ' WHERE ';
                     foreach($key as $k => $v) {
@@ -484,13 +491,16 @@ class Model {
                     } else {
                         $output['current_result_last'] = $total_results;
                     }
-                    $url_stripped = preg_replace('/page=\d+&?/', '', $url_default);
+                    $output['per_page'] = (int) $limit;
+                    $url_stripped = preg_replace('/[&?]?page=\d+/', '', $url_default);
                     if(strpos($url_stripped, '?') === false) {
-                        $output['url_next'] = $url_stripped . '?page=' . urlencode($output['page_next']);
-                        $output['url_previous'] = $url_stripped . '?page=' . urlencode($output['page_previous']);
+                        $output['url_next'] = _uri($url_stripped . '?page=' . urlencode($output['page_next']));
+                        $output['url_current'] = _uri($url_stripped . '?page=' . urlencode($output['page_current']));
+                        $output['url_previous'] = _uri($url_stripped . '?page=' . urlencode($output['page_previous']));
                     } else {
-                        $output['url_next'] = $url_stripped . '&page=' . urlencode($output['page_next']);
-                        $output['url_previous'] = $url_stripped . '&page=' . urlencode($output['page_previous']);
+                        $output['url_next'] = _uri($url_stripped . '&page=' . urlencode($output['page_next']));
+                        $output['url_current'] = _uri($url_stripped . '&page=' . urlencode($output['page_current']));
+                        $output['url_previous'] = _uri($url_stripped . '&page=' . urlencode($output['page_previous']));
                     }
                 } else {
                     $output = $raw[0]['total'];
@@ -1014,18 +1024,20 @@ class Model {
 
                 $raw = ao()->db->query($sql, $values);
             }
-            foreach($raw as $item) {
-                if($return_type == 'all') {
-                    $item = new $class($item);
-                    $output[] = $item->all;
-                } elseif($return_type == 'data') {
-                    $item = new $class($item);
-                    $output[] = $item->data;
-                } elseif($return_type == 'raw') {
-                    $item = new $class($item);
-                    $output[] = $item->raw;
-                } else {
-                    $output[] = new $class($item);
+
+            if($return_type == 'raw') {
+                $output = $raw;
+            } else {
+                foreach($raw as $item) {
+                    if($return_type == 'all') {
+                        $item = new $class($item);
+                        $output[] = $item->all;
+                    } elseif($return_type == 'data') {
+                        $item = new $class($item);
+                        $output[] = $item->data;
+                    } else {
+                        $output[] = new $class($item);
+                    }
                 }
             }
         }

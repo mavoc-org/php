@@ -3,10 +3,31 @@
 use mavoc\core\Clean;
 use mavoc\core\Markdown;
 
+$time_start = 0;
+
 if(!function_exists('ao')) {
     function ao() {
         global $ao;
         return $ao;
+    }
+}
+
+if(!function_exists('blankDateTime')) {
+    function blankDateTime($output = '') {
+        $item = new DateTimeBlank();
+        /*
+        $item = new class {
+            public $output;
+
+            public function format($input) { 
+                return $this->output;
+            }
+        };
+         */
+
+        $item->output = $output;
+
+        return $item;
     }
 }
 
@@ -104,7 +125,7 @@ if(!function_exists('classify')) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $words = preg_replace('/[\s,-_]+/', ' ', strtolower($words));
+        $words = preg_replace('/[\s,_-]+/', ' ', strtolower($words));
         $words = ucwords($words);
         $words = ao()->hook('ao_helpers_classify_words', $words);
         $output = str_replace(' ', '', $words);
@@ -124,6 +145,17 @@ if(!function_exists('clean')) {
     }
 }
 
+if(!function_exists('commaize')) {
+    // Dump and die
+    function commaize($input) {
+        if($input || $input === '0' || $input === 0) {
+            return number_format($input);
+        } else {
+            return '';
+        }
+    }
+}
+
 if(!function_exists('dangerous')) {
     function dangerous($input) {
         echo $input;
@@ -135,7 +167,9 @@ if(!function_exists('dashify')) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $words = preg_replace('/[\s,-_]+/', ' ', strtolower($words));
+        // Split out any numbers
+        $words = preg_replace('/([a-z])(\d)/', '$1 $2', $words);
+        $words = preg_replace('/[\s,_-]+/', ' ', strtolower($words));
         $parts = explode(' ', $words);
         if(count($parts)) {
             $parts[0] = strtolower($parts[0]);
@@ -165,6 +199,7 @@ if(!function_exists('dc')) {
         echo '<pre>'; 
         print_r($input); 
         echo '</pre>'; 
+        echo "\n"; 
     }
 }
 
@@ -174,6 +209,7 @@ if(!function_exists('dd')) {
         echo '<pre>'; 
         print_r($input); 
         echo '</pre>'; 
+        echo "\n"; 
         die;
     }
 }
@@ -259,6 +295,23 @@ if(!function_exists('debugSql')) {
     }
 }
 
+if(!function_exists('ec')) {
+    // Dump and continue
+    function ec($input) {
+        echo $input; 
+        echo "\n"; 
+    }
+}
+
+if(!function_exists('ed')) {
+    // Dump and die
+    function ed($input) {
+        echo $input; 
+        echo "\n"; 
+        die;
+    }
+}
+
 // From: https://stackoverflow.com/questions/1416697/converting-timestamp-to-time-ago-in-php-e-g-1-day-ago-2-days-ago
 // https://stackoverflow.com/a/18602474
 // Slightly modified to accept DateTime objects.
@@ -336,7 +389,7 @@ if(!function_exists('elapsed')) {
         } elseif($diff->h) {
             $output = $diff->h . 'h ago';
         } elseif($diff->i) {
-            $output = $diff->i . 'm ago';
+            $output = $diff->i . 'min ago';
         } elseif($diff->s) {
             $output = $diff->s . 's ago';
         } else {
@@ -456,6 +509,28 @@ if(!function_exists('future')) {
 }
 
 
+if(!function_exists('innerTruncate')) {
+    function innerTruncate($text, $start_index = -1, $end_index = -1) {   
+        $start = '';
+        $middle = '...';
+        $end = '';
+
+        if($start_index == -1 && $end_index == -1) {
+            $start = substr($text, 0, 5);
+            $end = substr($text, -5);
+        } elseif($start_index > -1 && $end_index == -1) {
+            $start = substr($text, 0, $start_index);
+            $end = substr($text, -1 * $start_index);
+        } elseif($start_index > -1 && $end_index > -1) {
+            $start = substr($text, 0, $start_index);
+            $end = substr($text, -1 * $end_index);
+        }
+
+        $output = $start . $middle . $end;
+        return $output;
+    }   
+} 
+
 
 if(!function_exists('linkify')) {
     // From https://daringfireball.net/2010/07/improved_regex_for_matching_urls
@@ -503,7 +578,7 @@ if(!function_exists('methodify')) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $words = preg_replace('/[\s,-_]+/', ' ', strtolower($words));
+        $words = preg_replace('/[\s,_-]+/', ' ', strtolower($words));
         $words = ucwords($words);
         $parts = explode(' ', $words);
         if(count($parts)) {
@@ -659,7 +734,8 @@ if(!function_exists('stripStyle')) {
         $output = $input;
         // From: https://stackoverflow.com/questions/5517255/remove-style-attribute-from-html-tags
         // This could really be improved - it assumes double quotes and ignores single quotes.
-        $output = preg_replace('/(<[^>]+) style=".*?"/i', '$1', $output);
+        $output = preg_replace('/(<[^>]+)style=".*?"/is', '$1', $output);
+        $output = preg_replace("/(<[^>]+)style='.*?'/is", '$1', $output);
 
         $output = preg_replace('/<style.*<\/style>/s', '', $output);
         return $output;
@@ -681,12 +757,39 @@ if(!function_exists('success')) {
     }   
 } 
 
+if(!function_exists('tend')) {
+    function tend($die = true, $output = true) {
+        global $time_start;
+
+        // true returns a float
+        $time_end = microtime(true);
+        $time = $time_end - $time_start;
+
+        if($output && $die) {
+            dd($time);
+        } elseif($output) {
+            dc($time);
+        } else {
+            return $time;
+        }
+    }
+}
+
+if(!function_exists('tstart')) {
+    function tstart() {
+        global $time_start;
+
+        // true returns a float
+        $time_start = microtime(true);
+    }
+}
+
 if(!function_exists('underscorify')) {
     function underscorify($input) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $words = preg_replace('/[\s,-_]+/', ' ', strtolower($words));
+        $words = preg_replace('/[\s,_-]+/', ' ', strtolower($words));
         $parts = explode(' ', $words);
         if(count($parts)) {
             $parts[0] = strtolower($parts[0]);
@@ -701,7 +804,7 @@ if(!function_exists('upperify')) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $output = preg_replace('/[\s,-_]+/', '_', strtoupper($words));
+        $output = preg_replace('/[\s,_-]+/', '_', strtoupper($words));
         return $output;
     }   
 }
@@ -722,6 +825,7 @@ if(!function_exists('uri')) {
     }
 }
 
+// If not outputting to HTML, you probably want to use uri() which does not escape
 if(!function_exists('_url')) {
     function _url($input) {
         $output = '';
@@ -749,7 +853,7 @@ if(!function_exists('wordify')) {
         $input = ao()->hook('helper_split_input', $input);
         // Add a space before uppercase letters (make sure the first letter is not uppercase).
         $words = preg_replace('/(?=[A-Z])/', ' $0', lcfirst($input));
-        $words = preg_replace('/[\s,-_]+/', ' ', strtolower($words));
+        $words = preg_replace('/[\s,_-]+/', ' ', strtolower($words));
 
         // Uppercase any abbreviations
         // Acronyms won't have any vowels (some may but this is just a rough working example for now) 
@@ -769,5 +873,13 @@ if(!function_exists('wordify')) {
         $output = $words;
         $output = ao()->hook('helper_wordify_output', $words);
         return $output;
+    }
+}
+
+class DateTimeBlank {
+    public $output;
+
+    public function format($input) { 
+        return $this->output;
     }
 }

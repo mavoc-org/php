@@ -20,6 +20,7 @@ use mavoc\core\Console;
 use mavoc\core\DB;
 use mavoc\core\Email;
 use mavoc\core\Hooks;
+use mavoc\core\Log;
 use mavoc\core\Plugins;
 use mavoc\console\Route as MainRoute;
 use mavoc\console\Router as MainRouter;
@@ -41,6 +42,7 @@ require_once 'mavoc/core/GenericController.php';
 require_once 'mavoc/core/Email.php';
 require_once 'mavoc/core/Hooks.php';
 require_once 'mavoc/core/HTML.php';
+require_once 'mavoc/core/Log.php';
 require_once 'mavoc/core/InternalREST.php';
 require_once 'mavoc/core/Model.php';
 require_once 'mavoc/core/Plugins.php';
@@ -74,6 +76,7 @@ class Main {
     public $in;
     public $hooks;
     public $local;
+    public $log;
     public $out;
     public $plugins;
     public $router;
@@ -165,6 +168,13 @@ class Main {
         }
         $this->hook('ao_console_start');
 
+        $this->log = new Log();
+        $this->log = $this->hook('ao_log', $this->log);
+        $func = [$this->log, 'init'];
+        $func = $this->hook('ao_log_init', $func);
+        call_user_func($func);
+        $this->log = $this->hook('ao_log_initialized', $this->log);
+
         // Have a separate creation and then init for hook purposes.
         // Allows setting things up in the constructor and then making 
         // additional overrides in the init() method. Specifically useful
@@ -231,6 +241,8 @@ class Main {
             call_user_func($func);
         }
 
+        // Do not set to true 
+        //$this->session_initialized = true;
 
         $this->router = new Router();
         $this->router = $this->hook('ao_console_router', $this->router);

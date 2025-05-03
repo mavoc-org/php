@@ -45,6 +45,9 @@ class Cleaners {
     }
 
     public function int($value, $default = null) {
+        // Make sure the comma is removed.
+        $value = str_replace(',', '', $value);
+
         // If it is not an integer, set it to 0.
         if(filter_var($value, FILTER_VALIDATE_INT) === false) {
             if($default !== null) {
@@ -54,7 +57,7 @@ class Cleaners {
             }
         }
 
-        return $value;
+        return (int) $value;
     }   
 
     public function int2($value, $default = null) {

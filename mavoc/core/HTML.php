@@ -339,7 +339,7 @@ class HTML {
 
     public function _option($label, $name = null, $value = null, $current_value = null, $class = null, $extra = null) {
         if($value === null) {
-            $value = $label;
+            $value = underscorify($label);
         }
 
         $selected = '';
@@ -525,6 +525,14 @@ class HTML {
     }
 
     public function _radios($label, $name = '', $data = []) {
+        if(is_array($name)) {
+            $data = $name;
+            $name = null;
+        }
+        if(!$name) {
+            $name = underscorify($label);
+        }
+
         $error = false;
         if(isset($this->session->flash['error'][$name])) {
             $error = true;

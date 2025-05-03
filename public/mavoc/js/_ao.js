@@ -239,6 +239,10 @@ window._ao = {};
         return output;
     };
 
+    _ao.redirect = function(url) {
+        window.location.href = url;
+    };
+
     _ao.reload = function() {
         window.location.href = window.location.href;
     };

@@ -321,6 +321,48 @@ PHP;
         out('The migration has been created: ' . $file, 'green');
     }
 
+    public function status($in, $out) {
+        $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';
+        if(!is_dir($dir)) {
+            out('Error: ' . 'The db/migrations directory does not appear to exist. Please create it.', 'red');
+            exit(1);
+        }
+
+        $migrations = [];
+        foreach(scandir($dir) as $file) {
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            $path = ao()->hook('ao_router_path', $path);
+            if(is_file($path)) {
+                $migrations[] = [
+                    'file' => $file,
+                    'path' => $path,
+                ];
+            }
+        }
+
+        // Probably need to sort migrations
+
+        // Get database migrations
+        $results = $this->db->query('SELECT * FROM _migrations');
+        //print_r($results);die;
+
+        // Place into an associated array based on migration name (pdo might be able to do this)
+        $past = [];
+        foreach($results as $row) {
+            $past[$row['migration']] = true;
+        }
+
+        $run_count = 0;
+        // Loop through and process the ones that are not in the database
+        foreach($migrations as $migration) {
+            if(!isset($past[$migration['file']])) {
+                out('Migration not ran: ' . $migration['file'], 'red');
+            } else {
+                out('Migration ran: ' . $migration['file'], 'green');
+            }
+        }
+    }
+
     // mig up is greedy (all at once) while mig down is stingy (one at a time)
     public function up($in, $out) {
         $dir = ao()->env('AO_DB_DIR') . DIRECTORY_SEPARATOR . 'migrations';

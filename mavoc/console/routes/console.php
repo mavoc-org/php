@@ -13,5 +13,6 @@ Route::command('mig alter', ['\mavoc\console\controllers\MigController', 'alter'
 Route::command('mig down', ['\mavoc\console\controllers\MigController', 'down']);
 Route::command('mig init', ['\mavoc\console\controllers\MigController', 'init']);
 Route::command('mig new', ['\mavoc\console\controllers\MigController', 'new']);
+Route::command('mig status', ['\mavoc\console\controllers\MigController', 'status']);
 Route::command('mig up', ['\mavoc\console\controllers\MigController', 'up']);
 

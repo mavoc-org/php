@@ -18,6 +18,7 @@ use mavoc\core\Email;
 use mavoc\core\Exception;
 use mavoc\core\Hooks;
 use mavoc\core\HTML;
+use mavoc\core\Log;
 use mavoc\core\Plugins;
 use mavoc\core\Route;
 use mavoc\core\Router;
@@ -40,6 +41,7 @@ require_once 'core/Email.php';
 require_once 'core/Exception.php';
 require_once 'core/Hooks.php';
 require_once 'core/HTML.php';
+require_once 'core/Log.php';
 require_once 'core/InternalREST.php';
 require_once 'core/Model.php';
 require_once 'core/Plugins.php';
@@ -73,6 +75,7 @@ class Mavoc {
     public $hooks;
     public $html;
     public $local;
+    public $log;
     public $plugins;
     public $request;
     public $response;
@@ -156,6 +159,13 @@ class Mavoc {
         $this->confs = new Confs();
 
         $this->hook('ao_start');
+
+        $this->log = new Log();
+        $this->log = $this->hook('ao_log', $this->log);
+        $func = [$this->log, 'init'];
+        $func = $this->hook('ao_log_init', $func);
+        call_user_func($func);
+        $this->log = $this->hook('ao_log_initialized', $this->log);
 
         // Have a separate creation and then init for hook purposes.
         // Allows setting things up in the constructor and then making 

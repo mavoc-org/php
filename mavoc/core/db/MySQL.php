@@ -56,6 +56,36 @@ class MySQL {
         return $sql;
     }
 
+    public static function alterTableIndex($table, $args) {
+        $sql = '';
+
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        foreach($args as $name => $cols) {
+            if(is_array($cols)) {
+                // Add escape characters.
+                $cols = array_map(function($item) {
+                    return "`$item`";
+                }, $cols);
+                $sql .= 'ALTER TABLE `' . $table . '` ADD INDEX `' . $name . '` (' . implode(', ', $cols) . '); ';
+            } else {
+                $sql .= 'ALTER TABLE `' . $table . '` ADD INDEX `' . $name . '` (`' . $cols . '`); ';
+            }
+        }
+
+        return $sql;
+    }
+
+    public static function alterTableIndexDrop($table, $args) {
+        $sql = '';
+
+        // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.
+        foreach($args as $name) {
+            $sql .= 'ALTER TABLE `' . $table . '` DROP INDEX `' . $name . '`; ';
+        }
+
+        return $sql;
+    }
+
     public static function alterTableModify($table, $args) {
         $sql = '';
 
@@ -181,6 +211,13 @@ class MySQL {
             } else {
                 $sql .= "DEFAULT '" . 0 . "' ";
             }
+        } elseif($type == 'date') {
+            $sql .= '`' . $key . '` date ';
+            if(isset($extras['default'])) {
+                $sql .= "DEFAULT '" . $extras['default'] . "' ";
+            } else {
+                $sql .= "DEFAULT NULL ";
+            }
         } elseif($type == 'datetime') {
             $sql .= '`' . $key . '` datetime ';
             if(isset($extras['default'])) {
@@ -191,7 +228,7 @@ class MySQL {
         } elseif($type == 'geometry') {
             $sql .= '`' . $key . '` geometry ';
         } elseif($type == 'integer') {
-            $sql .= '`' . $key . '` int NOT NULL ';
+            $sql .= '`' . $key . '` bigint NOT NULL ';
             if(isset($extras['default'])) {
                 $sql .= "DEFAULT '" . $extras['default'] . "' ";
             } else {
@@ -226,7 +263,7 @@ class MySQL {
         return $sql;
     }
 
-    public function dropTable($table) {
+    public static function dropTable($table) {
         $sql = '';
 
         // TODO: Be careful. Do not use with user passed in data. Need to prepare the table passed in.

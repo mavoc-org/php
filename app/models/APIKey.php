@@ -8,6 +8,7 @@ use mavoc\core\Model;
 class APIKey extends Model {
     public static $table = 'api_keys';
     public static $private = ['api_key_hash'];
+    public static $columns = null;
 
     public static function create($args) {
         $prefix = ao()->env('API_PREFIX');
@@ -33,7 +34,7 @@ class APIKey extends Model {
     }
 
     public static function validate($username, $password) {
-        $data = ao()->db->query('SELECT ak.user_id, ak.api_key_hash FROM users u, api_keys ak WHERE u.username = ? AND u.id = ak.user_id', $username);
+        $data = ao()->db->query('SELECT ak.user_id, ak.api_key_hash FROM usernames un, api_keys ak WHERE un.name = ? AND un.user_id = ak.user_id', $username);  
 
         $pass = false;
         foreach($data as $row) {

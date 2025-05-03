@@ -10,6 +10,7 @@ use DateTime;
 class RefreshLogin extends Model {
     public static $table = 'refresh_logins';
     public static $private = ['refresh_hash'];
+    public static $columns = null;
 
     public static function create($args) {
         // Delete old refresh hashes

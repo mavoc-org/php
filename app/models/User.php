@@ -8,6 +8,7 @@ use mavoc\core\Model;
 class User extends Model {
     public static $table = 'users';
     public static $private = ['email', 'password'];
+    public static $columns = null;
 
     public function changePassword($old_password, $new_password) {
         if(ao()->env('APP_LOGIN_TYPE') == 'db') {

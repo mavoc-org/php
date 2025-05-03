@@ -19,12 +19,20 @@ class DB {
     public $last_insert_id = 0;
     public $last_insert_table = '';
 
+    public $debug = false;
+    public $last_sql = '';
+
     public $quote = '"';
 
     public function __construct() {
     }   
 
     public function init() {
+        // Alternative (not used but placed here for easy reference/manual testing)
+        //$conn = new \mysqli(ao()->env('DB_HOST'), ao()->env('DB_USER'), ao()->env('DB_PASS'), ao()->env('DB_NAME'));
+        //$sql = "SELECT COUNT(id) as total FROM users";
+        //$result = $conn->query($sql);
+
         // Based on / Inspired by: https://phpdelusions.net/pdo
         // If you are new to databases, you should read this: https://phpdelusions.net/sql_injection
         $this->type = ao()->env('DB_TYPE');
@@ -79,10 +87,33 @@ class DB {
 
         if($args_count > 0) {
             $prepared = $this->pdo->prepare($args[0]);
+            if($this->debug) {
+                $this->last_sql = $prepared->queryString . ';';
+            }
+
             if($args_count >= 2 && is_array($args[1])) {
                 $result = $prepared->execute($args[1]);
+
+                if($this->debug) {
+                    foreach($args[1] as $value) {
+                        if(is_numeric($value)) {
+                            $this->last_sql = preg_replace('/\?/', $value, $this->last_sql, 1);
             } else {
-                $result = $prepared->execute(array_slice($args, 1));
+                            $this->last_sql = preg_replace('/\?/', '"' . $value . '"', $this->last_sql, 1);
+                        }
+                    }
+                }
+            } else {
+                $value = array_slice($args, 1);
+                $result = $prepared->execute($value);
+
+                if($this->debug) {
+                    if(is_numeric($value)) {
+                        $this->last_sql = preg_replace('/\?/', $value, $this->last_sql, 1);
+                    } else {
+                        $this->last_sql = preg_replace('/\?/', '"' . $value . '"', $this->last_sql, 1);
+                    }
+                }
             }
 
             if($result === false) {
@@ -135,6 +166,30 @@ class DB {
         return $sql;
     }
 
+    public function alterTableIndex($table, $args) {
+        $sql = '';
+
+        if(in_array($this->type, ['mysql'])) {
+            $sql = MySQL::alterTableIndex($table, $args);
+        } elseif(in_array($this->type, ['pgsql'])) {
+            $sql = PostgreSQL::alterTableIndex($table, $args);
+        }
+
+        return $sql;
+    }
+
+    public function alterTableIndexDrop($table, $args) {
+        $sql = '';
+
+        if(in_array($this->type, ['mysql'])) {
+            $sql = MySQL::alterTableIndexDrop($table, $args);
+        } elseif(in_array($this->type, ['pgsql'])) {
+            $sql = PostgreSQL::alterTableIndexDrop($table, $args);
+        }
+
+        return $sql;
+    }
+
     public function alterTableRename($table, $args) {
         $sql = '';
 
@@ -173,6 +228,9 @@ class DB {
                 // Prep data (like converting DateTime to string)
                 if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
+                } elseif(is_object($value) && method_exists($value, 'format')) {
+                    // Probably a datetime field that is empty
+                    $value = null;
                 }
 
                 $args[] = $value;
@@ -272,6 +330,9 @@ class DB {
             // Prep data (like converting DateTime to string)
             if($value instanceof DateTime) {
                 $value = $value->format('Y-m-d H:i:s');
+            } elseif(is_object($value) && method_exists($value, 'format')) {
+                // Probably a datetime field that is empty
+                $value = null;
             }
 
             $args[] = $value;
@@ -306,6 +367,9 @@ class DB {
             // Prep data (like converting DateTime to string
             if($value instanceof DateTime) {
                 $value = $value->format('Y-m-d H:i:s');
+            } elseif(is_object($value) && method_exists($value, 'format')) {
+                // Probably a datetime field that is empty
+                $value = null;
             }
 
             $args[] = $value;

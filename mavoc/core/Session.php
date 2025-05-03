@@ -7,6 +7,7 @@ use app\models\RefreshLogin;
 use app\models\User;
 
 class Session {
+    public $api_username = '';
     public $data = [];
     public $flash;
     public $next_flash;
@@ -37,6 +38,7 @@ class Session {
 
             $user = APIKey::validate($api_username, $api_password);
 
+            $this->api_username = $api_username;
             $this->user = $user;
             $this->user_id = $user->id;
             $this->flash = [];
